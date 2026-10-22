@@ -346,7 +346,7 @@ export default function DelegationListingPage({ rows = DELEGATION_ROWS, drafts =
               }`}
               style={{ fontFamily: font }}
             >
-              Advance Filters
+              Advanced Filters
               <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7">
                 <path d="M3 5h14M5 10h10M7 15h6" strokeLinecap="round" />
               </svg>
