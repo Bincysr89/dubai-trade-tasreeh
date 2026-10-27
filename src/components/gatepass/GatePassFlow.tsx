@@ -9,9 +9,10 @@ import {
   HostPassDetailsPage, HostViewPassPage, HostDecisionPage, ApproveConfirmModal, RejectModal, ReturnModal,
   HOST_ALL_VARIANT, HOST_APPROVALS_VARIANT, type Decision,
 } from './HostGatePassPages';
+import { IndividualPassFormPage, AmendPassPage, DeleteDraftModal, INDIVIDUAL_VARIANT } from './IndividualGatePassPages';
 import { getPersona } from '../../persona';
 import {
-  GATE_ROWS, DRAFT_ROWS, HOST_ROWS, APPROVAL_ROWS, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, ZONE_PORTS,
+  GATE_ROWS, DRAFT_ROWS, HOST_ROWS, APPROVAL_ROWS, INDIVIDUAL_ROWS, INDIVIDUAL_DRAFTS, individualVisitor, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, PASS_FEE, ZONE_PORTS,
   formFromRow, shortRef, fromIso, perPassAmount, money,
   type GateRow, type GateStatus, type GatePassForm, type RowAction, type Visitor, type PassCategory,
 } from './gatePassData';
@@ -33,7 +34,9 @@ type Step =
   /* Host Company persona */
   | { kind: 'hostReview'; row: GateRow; reviewable: boolean }
   | { kind: 'hostDecision'; row: GateRow; decision: Decision; date: string }
-  | { kind: 'hostPass'; row: GateRow };
+  | { kind: 'hostPass'; row: GateRow }
+  /* Individual persona */
+  | { kind: 'amend'; row: GateRow };
 
 type HostTab = 'all' | 'approvals';
 
@@ -49,8 +52,11 @@ const inOneMonth = () => { const d = new Date(); d.setMonth(d.getMonth() + 1); r
  */
 export default function GatePassFlow({ onClose }: Props) {
   const [step, setStep] = useState<Step>({ kind: 'listing' });
-  const [rows, setRows] = useState<GateRow[]>(() => (getPersona() === 'host-company' ? HOST_ROWS : GATE_ROWS));
-  const [drafts, setDrafts] = useState<GateRow[]>(DRAFT_ROWS);
+  const [rows, setRows] = useState<GateRow[]>(() => {
+    const p = getPersona();
+    return p === 'host-company' ? HOST_ROWS : p === 'individual' ? INDIVIDUAL_ROWS : GATE_ROWS;
+  });
+  const [drafts, setDrafts] = useState<GateRow[]>(() => (getPersona() === 'individual' ? INDIVIDUAL_DRAFTS : DRAFT_ROWS));
   /* Visitors captured on the form, per application, for the View Pass table. */
   const [visitorsByApp, setVisitorsByApp] = useState<Record<string, Visitor[]>>({});
   const [formByDraft, setFormByDraft] = useState<Record<string, GatePassForm>>({});
@@ -61,6 +67,9 @@ export default function GatePassFlow({ onClose }: Props) {
 
   /* Host Company persona: All Requests + Pass Approvals tabs */
   const [isHost] = useState(() => getPersona() === 'host-company');
+  /* Individual (UAE PASS basic account): applies for themselves, prefilled from the profile */
+  const [isIndividual] = useState(() => getPersona() === 'individual');
+  const [deleteDraft, setDeleteDraft] = useState<GateRow | null>(null);
   const [hostTab, setHostTab] = useState<HostTab>('all');
   const [approvalRows, setApprovalRows] = useState<GateRow[]>(APPROVAL_ROWS);
   const [modal, setModal] = useState<{ kind: 'approve' | 'reject' | 'return'; row: GateRow } | null>(null);
@@ -104,7 +113,7 @@ export default function GatePassFlow({ onClose }: Props) {
   };
 
   const submitForm = (f: GatePassForm) => {
-    const row = isHost
+    const row = isHost || isIndividual
       ? { ...rowFromForm(f, 'Pending', 900 + rows.length), accessType: f.category === 'zone' ? 'Zone' : 'Port', approver: '--' }
       : rowFromForm(f, 'Under Review', 900 + rows.length);
     setRows(prev => [row, ...prev]);
@@ -121,7 +130,9 @@ export default function GatePassFlow({ onClose }: Props) {
   };
 
   const newForm = (category: PassCategory): GatePassForm =>
-    ({ ...EMPTY_FORM, category, entryGate: category === 'zone' ? 'Any Gate' : '' });
+    ({ ...EMPTY_FORM, category, entryGate: category === 'zone' ? 'Any Gate' : '', ...(isIndividual ? { hostCompany: '', visitors: [individualVisitor()] } : {}) });
+  const isDraft = (row: GateRow) => drafts.some(d => d.applicationNo === row.applicationNo);
+  const openDraft = (row: GateRow) => setStep({ kind: 'form', initial: formByDraft[row.applicationNo] ?? formFromRow(row) });
 
   const onAction = (a: string, row: GateRow) => {
     switch (a) {
@@ -134,7 +145,12 @@ export default function GatePassFlow({ onClose }: Props) {
       /* Host Company — All Requests flyout (Figma 1347:50348) + Pass Approvals icons */
       case 'View':               setStep(hostTab === 'approvals' ? { kind: 'hostReview', row, reviewable: false } : { kind: 'hostPass', row }); break;
       case 'Review':             setStep({ kind: 'hostReview', row, reviewable: true }); break;
-      case 'Edit':               setStep({ kind: 'form', initial: formFromRow(row), title: `Edit Request - ${shortRef(row)}` }); break;
+      case 'Edit':
+        if (isDraft(row)) openDraft(row);
+        else setStep({ kind: 'form', initial: formFromRow(row), title: `Edit Request - ${shortRef(row)}` });
+        break;
+      case 'Delete':             setDeleteDraft(row); break;
+      case 'Amend Pass':         setStep({ kind: 'amend', row }); break;
       case 'Reuse Pass Details': setStep({ kind: 'form', initial: formFromRow(row) }); break;
       case 'Print Receipt':      window.print(); break;
     }
@@ -154,6 +170,14 @@ export default function GatePassFlow({ onClose }: Props) {
       {modal?.kind === 'approve' && <ApproveConfirmModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Approved')} />}
       {modal?.kind === 'reject' && <RejectModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Rejected')} />}
       {modal?.kind === 'return' && <ReturnModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Returned')} />}
+      {deleteDraft && (
+        <DeleteDraftModal draftNo={deleteDraft.applicationNo} onClose={() => setDeleteDraft(null)}
+          onConfirm={() => {
+            setDrafts(prev => prev.filter(d => d.applicationNo !== deleteDraft.applicationNo));
+            setToast(`Draft ${deleteDraft.applicationNo} deleted`);
+            setDeleteDraft(null);
+          }} />
+      )}
       {toast && <Toast message={toast} onDone={clearToast} />}
     </>
   );
@@ -174,6 +198,20 @@ export default function GatePassFlow({ onClose }: Props) {
       break;
 
     case 'form':
+      if (isIndividual) {
+        page = (
+          <IndividualPassFormPage
+            key={`${step.title ?? 'create'}-${step.initial.category}`}
+            title={step.title ?? GATE_PASS_FORM_TITLE}
+            initial={step.initial}
+            onHome={onClose}
+            onBackToListing={() => toListing()}
+            onSaveDraft={saveDraft}
+            onSubmit={submitForm}
+          />
+        );
+        break;
+      }
       page = (
         <GatePassFormPage
           key={`${step.title ?? 'create'}-${step.paymentFailed ? 'failed' : 'ok'}-${step.initial.category}`}
@@ -282,6 +320,23 @@ export default function GatePassFlow({ onClose }: Props) {
       break;
     }
 
+    case 'amend': {
+      const s = step;
+      page = (
+        <AmendPassPage
+          row={s.row}
+          onHome={onClose}
+          onBack={() => toListing()}
+          onSubmit={() => {
+            const row = { ...s.row, status: 'Pending' as GateStatus, submittedDate: today() };
+            setRows(prev => prev.map(r => (r.applicationNo === s.row.applicationNo ? row : r)));
+            setStep({ kind: 'success', row, amount: PASS_FEE, heading: 'Your Amended Pass Submitted Successfully' });
+          }}
+        />
+      );
+      break;
+    }
+
     case 'hostDecision':
       page = <HostDecisionPage row={step.row} decision={step.decision} date={step.date} onHome={onClose} onBackToApprovals={toApprovals} />;
       break;
@@ -301,6 +356,22 @@ export default function GatePassFlow({ onClose }: Props) {
     }
 
     default:
+      if (isIndividual) {
+        page = (
+          <GatePassListingPage
+            key={step.drafts ? 'ind-drafts' : 'ind-passes'}
+            variant={INDIVIDUAL_VARIANT}
+            rows={rows}
+            drafts={drafts}
+            initialShowDrafts={step.drafts}
+            onClose={onClose}
+            onCreate={() => setStep({ kind: 'start' })}
+            onAction={onAction}
+            onOpenDraft={openDraft}
+          />
+        );
+        break;
+      }
       if (isHost) {
         const approvals = hostTab === 'approvals';
         page = (

@@ -98,6 +98,7 @@ export default function LoginPage() {
 
             <button
               type="button"
+              onClick={() => navigate('/uaepass')}
               className="bg-white border border-black rounded-full h-[56px] flex items-center justify-center gap-2 font-semibold text-[18px] shadow-[0_2px_1px_rgba(0,0,0,0.12)] hover:bg-gray-50"
             >
               <img src={uaePassLogoSrc} alt="UAE PASS" style={{ height: 24, width: 24 }} />

@@ -1,8 +1,9 @@
 /* Tasreeh persona chosen on the customer-type popup.
    visitor          → Visitor
    visitor-company  → Visitor Company (the standard Tasreeh service flows)
-   host-company     → Host Company (Gate Pass: All Requests + Pass Approvals) */
-export type Persona = 'visitor' | 'visitor-company' | 'host-company' | 'other';
+   host-company     → Host Company (Gate Pass: All Requests + Pass Approvals)
+   individual       → UAE PASS basic (individual) account — Gate Pass only */
+export type Persona = 'visitor' | 'visitor-company' | 'host-company' | 'individual' | 'other';
 
 const KEY = 'dt-persona';
 

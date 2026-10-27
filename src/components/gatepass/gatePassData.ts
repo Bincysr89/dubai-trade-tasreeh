@@ -1,3 +1,4 @@
+import { getPersona } from '../../persona';
 /* ──────────────────────────────────────────────────────────────
    Tasreeh — Gate Passes (Supplier → Gate Management).
    Reference data, listing rows and status chrome shared by the
@@ -7,6 +8,8 @@
 export const GATE_PASS_TITLE = 'Tasreeh - Gate Passes';
 export const GATE_PASS_FORM_TITLE = 'Tasreeh - Gate Pass';
 export const AGENT_BANNER = 'A180-SHIPPING AGENT(A)-MAERSK KAKOO UAE LLC';
+/* The individual (UAE PASS) account has no agent code — show the account holder instead */
+export const agentBanner = () => (getPersona() === 'individual' ? 'INDIVIDUAL - AHMED AL MARRI' : AGENT_BANNER);
 
 /* Gate Management column of the Supplier catalogue (Figma 1:6268) */
 export const TASREEH_SERVICES = [
@@ -136,6 +139,9 @@ export type GateRow = {
   accessType?: string;
   visitorCompany?: string;
   visitorEmail?: string;
+  /* My Drafts (individual) */
+  serviceType?: string;
+  expiresOn?: string;
 };
 
 const FIRST = ['Azan', 'Rahul', 'Omar', 'Maria', 'Khalid', 'Sara', 'Imran', 'Daniel', 'Layla', 'Vikram', 'Hassan', 'Grace'];
@@ -311,3 +317,64 @@ export const APPROVAL_ROWS: GateRow[] = REFS.map((ref, i) => {
 });
 
 export const REJECTION_REASONS = ['Incomplete visitor information', 'Invalid or expired documents', 'Visit not authorised by host', 'Security clearance not granted', 'Other'];
+
+/* ──────────────────────────────────────────────────────────────
+   Individual persona — UAE PASS basic account (Tasreeh-Dev Figma
+   972:34908 listing · 972:36193 flyout · 1087:16926 My Drafts)
+   ────────────────────────────────────────────────────────────── */
+/* Profile shared by UAE PASS: prefills the visitor block of every pass */
+export const INDIVIDUAL_PROFILE = {
+  title: 'Mr', firstName: 'Ahmed', lastName: 'Al Marri', email: 'ahmed.almarri@gmail.com', mobile: '+971-55-952-4462',
+  designation: 'Engineer', visaType: 'Resident', gender: 'Male', dob: '1988-05-14', emiratesId: '784-1988-7654321-2',
+  eidExpiry: '01-Jan-2026', passportNo: 'N8812345', passportExpiry: '01-Jan-2028', visaNo: '201/2023/7654321',
+  visaExpiry: '01-Jan-2026', nationality: 'United Arab Emirates', companyName: '--', drivingLicense: 'DL-884120',
+};
+
+export const individualVisitor = (): Visitor => ({
+  id: 'v-individual', visaType: INDIVIDUAL_PROFILE.visaType, emiratesId: INDIVIDUAL_PROFILE.emiratesId,
+  dob: INDIVIDUAL_PROFILE.dob, gender: INDIVIDUAL_PROFILE.gender, title: INDIVIDUAL_PROFILE.title,
+  firstName: INDIVIDUAL_PROFILE.firstName, lastName: INDIVIDUAL_PROFILE.lastName,
+  companyName: INDIVIDUAL_PROFILE.companyName, companyAddress: '', vehicleNo: '',
+});
+
+/* Three-dot flyout (Figma 972:36193); returned passes can also be amended (Figma 972:35792) */
+export const INDIVIDUAL_ACTIONS = ['View', 'Edit', 'Renew Pass', 'Print Pass', 'Print Receipt', 'Report Lost Pass'];
+export const AMEND_ACTION = 'Amend Pass';
+export const DRAFT_MENU = ['Edit', 'Delete'];
+
+const IND_STATUS: GateStatus[] = ['Pending', 'Approved', 'Rejected', 'Returned', 'Draft', 'Expired', 'Approved', 'Rejected', 'Draft', 'Expired'];
+const IND_PORTS = ['Jebel Ali', 'Jebel Ali', 'Marfa Deira', 'Jebel Ali', 'Marfa Deira', 'JAFZA', 'Jebel Ali', 'Marfa Deira', 'JAFZA', 'Mina Rashid'];
+const IND_DURATIONS = ['One Day', 'One Year', 'One Day', 'One Week', 'One Year', 'One Month', 'One Week', 'One Day', 'One Year', 'One Month'];
+
+const profileFields = (): Partial<GateRow> => ({
+  visitorTitle: INDIVIDUAL_PROFILE.title, visitorFirst: INDIVIDUAL_PROFILE.firstName, visitorLast: INDIVIDUAL_PROFILE.lastName,
+  visitorName: `${INDIVIDUAL_PROFILE.firstName} ${INDIVIDUAL_PROFILE.lastName}`, nationality: INDIVIDUAL_PROFILE.nationality,
+  mobile: INDIVIDUAL_PROFILE.mobile, email: INDIVIDUAL_PROFILE.email, dob: fromIso(INDIVIDUAL_PROFILE.dob),
+  designation: INDIVIDUAL_PROFILE.designation, visaType: INDIVIDUAL_PROFILE.visaType, eidExpiry: INDIVIDUAL_PROFILE.eidExpiry,
+  visaExpiry: INDIVIDUAL_PROFILE.visaExpiry, companyName: INDIVIDUAL_PROFILE.companyName,
+  drivingLicense: INDIVIDUAL_PROFILE.drivingLicense, passportNo: INDIVIDUAL_PROFILE.passportNo,
+});
+
+export const INDIVIDUAL_ROWS: GateRow[] = REFS.map((ref, i) => ({
+  ...row(i + 60, IND_STATUS[i]),
+  ...profileFields(),
+  passRefNo: ref, portName: IND_PORTS[i], passType: i % 2 ? 'Temporary' : 'Permanent', passDuration: IND_DURATIONS[i],
+  hostCompany: 'Dubai Trade',
+  approver: IND_STATUS[i] === 'Draft' || IND_STATUS[i] === 'Expired' ? '--' : 'John Doe',
+}));
+
+/* My Drafts (Figma 1087:16926) */
+const DRAFT_SERVICES = ['Gate Pass', 'Report Lost Pass', 'Return Pass for Amendment'];
+export const INDIVIDUAL_DRAFTS: GateRow[] = Array.from({ length: 10 }, (_, i) => ({
+  ...row(i + 80, 'Draft'),
+  ...profileFields(),
+  applicationNo: `DFT${String(100231 + i)}`, passRefNo: '-',
+  serviceType: DRAFT_SERVICES[[0, 1, 2, 0, 1, 2, 1, 0, 2, 1][i]],
+  submittedDate: '01-Jan-2024', expiresOn: '01-Feb-2024', hostCompany: 'Dubai Trade',
+}));
+
+/* Approval history on a returned pass (Figma 972:35792) */
+export const AMEND_HISTORY = [
+  { date: '21-Sep-2023 11:30 PM', status: 'Return for Update', by: 'Jebel Ali Helpdesk', reason: 'Please modify the date of visit' },
+  { date: '21-Sep-2023 11:30 PM', status: 'Return for Update', by: 'Jebel Ali Helpdesk', reason: 'Please modify the date of visit' },
+];

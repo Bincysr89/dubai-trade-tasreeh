@@ -1,3 +1,4 @@
+import { getPersona } from '../persona';
 import { useState } from 'react';
 import Header from './Header';
 import supplierIconSrc from '../assets/icon-supplier.svg';
@@ -71,10 +72,14 @@ const SUPPLIER_COLUMNS: { title: string; items: string[] }[] = [
 ];
 
 /* Services that open a working flow */
-const LIVE = new Set(['Tasreeh - Gate Passes', 'Tasreeh - Delegation Visits', ...Object.keys(SERVICE_REGISTRY)]);
+const ALL_LIVE = ['Tasreeh - Gate Passes', 'Tasreeh - Delegation Visits', ...Object.keys(SERVICE_REGISTRY)];
+/* Individual (UAE PASS basic account) only gets the free Gate Pass service */
+const liveServices = () => new Set(getPersona() === 'individual' ? ['Tasreeh - Gate Passes'] : ALL_LIVE);
 const TASREEH = new Set(TASREEH_SERVICES);
 
 export default function SupplierDetailModal({ onClose }: Props) {
+  const [LIVE] = useState(liveServices);
+  const [individual] = useState(() => getPersona() === 'individual');
   const [search, setSearch] = useState('');
   const [service, setService] = useState<string | null>(null);
 
@@ -183,7 +188,7 @@ export default function SupplierDetailModal({ onClose }: Props) {
                   <div className="flex flex-col gap-[8px]">
                     {col.items.map(item => {
                       const live = LIVE.has(item);
-                      const tasreeh = TASREEH.has(item);
+                      const tasreeh = !individual && TASREEH.has(item);
                       return (
                         <button
                           key={item}

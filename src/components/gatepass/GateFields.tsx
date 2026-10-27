@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Header from '../Header';
 import { DateInput } from '../DatePicker';
 import { DhAmount } from '../Dh';
-import { AGENT_BANNER } from './gatePassData';
+import { agentBanner } from './gatePassData';
 
 export const font = "'Dubai', sans-serif";
 
@@ -598,7 +598,7 @@ export function GatePage({
             <span className="text-[#111838] font-medium cursor-pointer" onClick={onListing}>{crumb}</span>
           </div>
           <div className="px-[16px] py-[5px] rounded-[4px] text-[16px] text-[#0e1b3d]" style={{ background: '#e2ebf9', fontFamily: font }}>
-            {AGENT_BANNER}
+            {agentBanner()}
           </div>
         </div>
 

@@ -10,7 +10,7 @@ import { font, GSelect, GDate, GInput, NeedHelp, ResetBtn, IconBtn } from './Gat
 import {
   GATE_ROWS, DRAFT_ROWS, GATE_STATUSES, STATUS_STYLE, STATUS_COLORS, SEARCH_FIELDS, ROW_ACTIONS,
   DOWNLOAD_OPTIONS, PORTS, PASS_TYPES, PASS_DURATIONS, NATIONALITIES, GENERATED_BY, HOST_SUBUSERS,
-  GATE_PASS_TITLE, AGENT_BANNER,
+  GATE_PASS_TITLE, agentBanner,
   type GateRow, type GateStatus, type RowAction,
 } from './gatePassData';
 
@@ -29,6 +29,11 @@ export type ListingVariant = {
   hideDrafts?: boolean;
   /** Hide the primary button (Create / Apply New Pass) */
   hideCreate?: boolean;
+  /** Per-row flyout actions (e.g. Amend Pass only on returned passes) */
+  rowActions?: (row: GateRow) => string[];
+  /** Drafts table columns and its three-dot flyout (Edit / Delete) */
+  draftColumns?: (ColDef & { w: number })[];
+  draftActions?: string[];
 };
 
 type Props = {
@@ -153,7 +158,18 @@ const XCircle = () => (
     <circle cx="12" cy="12" r="9" /><path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
   </svg>
 );
+const Pencil = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#455174" strokeWidth="1.7">
+    <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" strokeLinejoin="round" />
+  </svg>
+);
+const Trash = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#dc3545" strokeWidth="1.7">
+    <path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 const ACTION_ICONS: Record<string, React.ReactNode> = {
+  Edit: <Pencil />, Delete: <Trash />,
   'View Request': <Eye />, 'Report Lost Pass': <Doc />, 'Renew Pass': <Doc />,
   'Cancel Request': <XCircle />, 'View Gate Pass': <Eye />, 'Print Pass': <Doc />,
 };
@@ -196,9 +212,11 @@ const Chevron = ({ onClick }: { onClick: () => void }) => (
 );
 
 /* ── Card view (Figma 109:7422) ── */
-function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft, actions }: {
+function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft, actions, draftMenu }: {
   row: GateRow; draft: boolean; selected: boolean; onToggle: () => void;
   onAction: (a: string) => void; onOpenDraft: () => void; actions?: readonly string[];
+  /** Drafts use the three-dot menu (Edit / Delete) instead of the continue chevron */
+  draftMenu?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const st = STATUS_STYLE[row.status];
@@ -231,7 +249,7 @@ function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft, actio
           </span>
         </div>
         <div className="relative flex-shrink-0">
-          {draft ? <Chevron onClick={onOpenDraft} /> : <Kebab onClick={() => setOpen(o => !o)} />}
+          {draft && !draftMenu ? <Chevron onClick={onOpenDraft} /> : <Kebab onClick={() => setOpen(o => !o)} />}
           {open && <ActionFlyout actions={actions} onPick={a => { setOpen(false); onAction(a); }} onClose={() => setOpen(false)} />}
         </div>
       </div>
@@ -277,7 +295,11 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
     actionMode: variant?.actionMode ?? 'kebab',
     hideDrafts: !!variant?.hideDrafts,
     hideCreate: !!variant?.hideCreate,
+    rowActions: variant?.rowActions,
+    draftColumns: variant?.draftColumns,
+    draftActions: variant?.draftActions,
   };
+  const actionsFor = (row: GateRow) => v.rowActions?.(row) ?? v.actions;
   const [view, setView] = useState<'list' | 'card'>('list');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
@@ -298,7 +320,9 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
 
   const searchRef = useOutside(searchDropOpen, () => setSearchDropOpen(false));
 
-  const visibleHeaders = visibleCols.map(k => v.columns.find(c => c.key === k)!).filter(Boolean);
+  const visibleHeaders = showDrafts && v.draftColumns
+    ? v.draftColumns
+    : visibleCols.map(k => v.columns.find(c => c.key === k)!).filter(Boolean);
 
   const {
     tableRef, scrollRef,
@@ -375,7 +399,7 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
               <span className="text-[#111838] font-medium">{v.title}</span>
             </div>
             <div className="px-[16px] py-[5px] rounded-[4px] text-[16px] text-[#0e1b3d]" style={{ background: '#e2ebf9', fontFamily: font }}>
-              {AGENT_BANNER}
+              {agentBanner()}
             </div>
           </div>
 
@@ -563,7 +587,7 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
           {view === 'card' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[20px]">
               {paginated.map(row => (
-                <PassCard key={row.applicationNo} row={row} draft={showDrafts} actions={v.actions}
+                <PassCard key={row.applicationNo} row={row} draft={showDrafts} draftMenu={!!v.draftActions} actions={showDrafts && v.draftActions ? v.draftActions : actionsFor(row)}
                   selected={selected.has(row.applicationNo)}
                   onToggle={() => toggleSelect(row.applicationNo)}
                   onAction={a => pick(a, row)}
@@ -709,7 +733,14 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
                             zIndex: openFlyout === i ? 50 : 1,
                           }}>
                             <div className="relative inline-block">
-                              {showDrafts ? (
+                              {showDrafts && v.draftActions ? (
+                                <>
+                                  <Kebab onClick={() => setOpenFlyout(openFlyout === i ? null : i)} />
+                                  {openFlyout === i && (
+                                    <ActionFlyout actions={v.draftActions} onPick={a => pick(a, row)} onClose={() => setOpenFlyout(null)} />
+                                  )}
+                                </>
+                              ) : showDrafts ? (
                                 <Chevron onClick={() => onOpenDraft(row)} />
                               ) : (
                                 v.actionMode === 'approval' ? (
@@ -721,7 +752,7 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
                                 <>
                                   <Kebab onClick={() => setOpenFlyout(openFlyout === i ? null : i)} />
                                   {openFlyout === i && (
-                                    <ActionFlyout actions={v.actions} onPick={a => pick(a, row)} onClose={() => setOpenFlyout(null)} />
+                                    <ActionFlyout actions={actionsFor(row)} onPick={a => pick(a, row)} onClose={() => setOpenFlyout(null)} />
                                   )}
                                 </>
                                 )
