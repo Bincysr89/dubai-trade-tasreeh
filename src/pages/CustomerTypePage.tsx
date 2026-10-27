@@ -51,7 +51,7 @@ export default function CustomerTypePage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-[1080px] mx-auto place-items-center">
             <CustomerCard
-              label="Trader"
+              label="Tasreeh persona type"
               selected={selected === 'trader'}
               onClick={() => select('trader', '/landing/trader')}
               icon={<TraderIcon size={72} />}
