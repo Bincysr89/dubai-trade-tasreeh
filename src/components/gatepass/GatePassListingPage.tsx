@@ -383,27 +383,6 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
             {v.title}
           </h1>
 
-          {/* Tabs (Host Company: All Requests / Pass Approvals) */}
-          {tabs && tabs.length > 0 && (
-            <div className="flex items-center gap-[10px] border-b border-[#e2e8f5] mb-[20px] overflow-x-auto" role="tablist">
-              {tabs.map(t => {
-                const on = t.key === activeTab;
-                return (
-                  <button key={t.key} role="tab" aria-selected={on} onClick={() => onTabChange?.(t.key)}
-                    className="flex items-center gap-[8px] px-[18px] pb-[14px] pt-[6px] text-[16px] whitespace-nowrap transition-colors flex-shrink-0"
-                    style={{ fontFamily: font, color: on ? '#1360d2' : '#5a6478', fontWeight: on ? 600 : 400,
-                      borderBottom: on ? '3px solid #1360d2' : '3px solid transparent', marginBottom: -1 }}>
-                    {t.label}
-                    {t.count !== undefined && (
-                      <span className="text-[13px] px-[8px] py-[1px] rounded-[10px]"
-                        style={{ background: on ? '#e2ebf9' : '#eef1f7', color: on ? '#1360d2' : '#697498', fontWeight: 600 }}>{t.count}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* Toolbar — row 1 */}
           <div className="flex items-center gap-[12px] mb-[14px] flex-wrap">
             <button
@@ -528,6 +507,25 @@ export default function GatePassListingPage({ variant, tabs, activeTab, onTabCha
 
           {/* Toolbar — row 2: Submitted-date badge + Drafts + Download + Columns */}
           <div className="relative flex items-center justify-center mb-[16px] min-h-[52px] flex-wrap gap-y-3">
+            {/* Tabs (Host Company: All Requests / Pass Approvals) — Integrated Clearance tab pill */}
+            {tabs && tabs.length > 0 && (
+              <div role="tablist"
+                className="lg:absolute left-0 bg-white flex items-center gap-[12px] h-[48px] px-[16px] py-[8px] rounded-[6px] flex-shrink-0 mr-auto lg:mr-0"
+                style={{ boxShadow: '0px 4px 10px rgba(0,0,0,0.08)' }}>
+                {tabs.map(t => {
+                  const on = t.key === activeTab;
+                  return (
+                    <button key={t.key} role="tab" aria-selected={on} onClick={() => onTabChange?.(t.key)}
+                      className={`h-[40px] px-[16px] rounded-[4px] text-[16px] font-medium transition-colors whitespace-nowrap ${
+                        on ? 'bg-[#1360d2] text-white' : 'bg-[#f7faff] text-[#697498] border border-[#e5efff]'
+                      }`}
+                      style={{ fontFamily: font }}>
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <StatusAsOnBadge
               label="Submitted Date"
               fromValue={dateFrom} toValue={dateTo}
