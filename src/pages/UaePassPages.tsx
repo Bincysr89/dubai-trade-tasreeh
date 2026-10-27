@@ -22,6 +22,7 @@ export function UaePassLoginPage() {
 
   const login = () => {
     setAuthenticated(true);
+    try { sessionStorage.removeItem('dt-bu-linked'); } catch { /* ignore */ }
     setPersona('individual');
     navigate('/uaepass/profile');
   };

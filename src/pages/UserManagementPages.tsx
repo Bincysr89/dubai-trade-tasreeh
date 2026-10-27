@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import ServiceCatalogueModal from '../components/ServiceCatalogueModal';
 import { font, GSection, GInput, GSelect, GTag, PrimaryBtn, SecondaryBtn } from '../components/gatepass/GateFields';
 import { Dialog } from '../components/gatepass/GatePassModals';
+import { homeRoute, markBuLinked } from '../persona';
 
 /* ──────────────────────────────────────────────────────────────
    User Management for the individual (UAE PASS) account —
@@ -12,7 +13,6 @@ import { Dialog } from '../components/gatepass/GatePassModals';
    Create User. Built on the portal card / field / button template.
    ────────────────────────────────────────────────────────────── */
 
-const HOME = '/landing/individual';
 
 const USER = {
   fullName: 'Ahmed Al Marri', emiratesId: '784-1988-7654321-2', phone: '+971 55 952 4462',
@@ -38,9 +38,9 @@ function UmPage({ crumb, title, sidebar = true, footerLeft, footerRight, childre
   const navigate = useNavigate();
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafd]" style={{ fontFamily: font }}>
-      <Header onHome={() => navigate(HOME)} />
+      <Header onHome={() => navigate(homeRoute())} />
       <div className="px-4 sm:px-[34px] pt-[16px] pb-[10px] flex items-center gap-[6px] text-[14px]">
-        <span className="text-[#8f94ae] cursor-pointer hover:text-[#1360d2]" onClick={() => navigate(HOME)}>Home</span>
+        <span className="text-[#8f94ae] cursor-pointer hover:text-[#1360d2]" onClick={() => navigate(homeRoute())}>Home</span>
         <span className="text-[#dc3545]">/</span>
         <span className="text-[#111838] font-medium">{crumb}</span>
       </div>
@@ -174,7 +174,7 @@ export function BuAssociationPage() {
     return (
       <UmPage crumb="Company Management" title="BU Association"
         footerRight={<>
-          <SecondaryBtn onClick={() => navigate(HOME)}>Back to Listing</SecondaryBtn>
+          <SecondaryBtn onClick={() => navigate(homeRoute())}>Back to Listing</SecondaryBtn>
           <PrimaryBtn disabled={!bu} onClick={() => setStep('confirm')}>Proceed</PrimaryBtn>
         </>}>
         <Card title="User Information" extra={
@@ -213,7 +213,7 @@ export function BuAssociationPage() {
     <UmPage crumb="User Profile" title="BU Association"
       footerRight={<>
         <SecondaryBtn onClick={() => setStep('select')}>Back</SecondaryBtn>
-        <PrimaryBtn onClick={() => setLinked(true)}>Confirm &amp; Link</PrimaryBtn>
+        <PrimaryBtn onClick={() => { markBuLinked(); setLinked(true); }}>Confirm &amp; Link</PrimaryBtn>
       </>}>
       <Card title={`Admin User Profile — ${short}`} extra={<span className="text-[14px] text-[#3f4d66]">Will be linked</span>}>
         <Grid>
@@ -278,7 +278,7 @@ export function BuAssociationPage() {
               Trade License Profile will be created under your company account details. View the details in Company Profile Service
             </p>
             <div className="flex flex-wrap justify-center gap-[10px] mt-[24px]">
-              <SecondaryBtn onClick={() => navigate(HOME)}>Back to Listing</SecondaryBtn>
+              <SecondaryBtn onClick={() => navigate(homeRoute())}>Back to Listing</SecondaryBtn>
               <PrimaryBtn onClick={() => navigate('/my-users/create')}>Add Sub User</PrimaryBtn>
             </div>
           </div>
@@ -354,7 +354,7 @@ export function CreateUserPage() {
   if (step === 1) {
     return (
       <UmPage crumb="My Users" title="Create User" sidebar={false}
-        footerLeft={<SecondaryBtn onClick={() => navigate(HOME)}>Cancel</SecondaryBtn>}
+        footerLeft={<SecondaryBtn onClick={() => navigate(homeRoute())}>Cancel</SecondaryBtn>}
         footerRight={<>
           <SecondaryBtn onClick={() => { setUnits(new Set()); setCodes(new Set()); }}>Reset</SecondaryBtn>
           <PrimaryBtn disabled={units.size === 0 && codes.size === 0} onClick={() => setStep(2)}>Next</PrimaryBtn>
@@ -406,7 +406,7 @@ export function CreateUserPage() {
 
   return (
     <UmPage crumb="My Users" title="Create User" sidebar={false}
-      footerLeft={<SecondaryBtn onClick={() => navigate(HOME)}>Cancel</SecondaryBtn>}
+      footerLeft={<SecondaryBtn onClick={() => navigate(homeRoute())}>Cancel</SecondaryBtn>}
       footerRight={<>
         <SecondaryBtn onClick={() => setStep(1)}>Back</SecondaryBtn>
         <PrimaryBtn onClick={() => setDone(true)}>Create User</PrimaryBtn>
@@ -493,7 +493,7 @@ export function CreateUserPage() {
             </span>
             <h2 className="text-[18px] font-bold text-[#0e1b3d]">Sub User Created Successfully</h2>
             <p className="text-[14px] text-[#3f4d66]">The selected services and privileges have been assigned to the new user.</p>
-            <PrimaryBtn onClick={() => navigate(HOME)}>Back to Home</PrimaryBtn>
+            <PrimaryBtn onClick={() => navigate(homeRoute())}>Back to Home</PrimaryBtn>
           </div>
         </Dialog>
       )}

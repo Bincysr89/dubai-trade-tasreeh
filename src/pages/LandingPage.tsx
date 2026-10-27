@@ -1,5 +1,5 @@
-import { setPersona, type Persona } from '../persona';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { setPersona, isBuLinked, type Persona } from '../persona';
+import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import Header from '../components/Header';
 import ServiceCatalogueModal from '../components/ServiceCatalogueModal';
@@ -248,6 +248,9 @@ export default function LandingPage() {
   const journeyTitle = isAirMode
     ? `Proposed Profile Journey - ${AIR_PERSONAS.find(p => p.id === airPersona)?.label} (Air ${tradeMode})`
     : `Proposed Profile Journey - ${SEA_PERSONAS.find(p => p.id === seaPersona)?.label} (Sea ${tradeMode})`;
+
+  /* Once the individual account is linked to a business unit it uses the Visitor Company home */
+  if (isIndividual && isBuLinked()) return <Navigate to="/landing/shipping-agent" replace />;
 
   return (
     <div className="min-h-screen" style={{ backgroundImage: `url(${bgSrc})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
