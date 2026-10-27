@@ -3,7 +3,7 @@ import {
   font, GatePage, GSection, Grid4, GValue, GAmount, GTag, toneFor, GSelect, GTextArea, GAgree,
   PrimaryBtn, SecondaryBtn,
 } from './GateFields';
-import { PassFields, StatusRight } from './GatePassViewPages';
+import { PassInfoFields, VisitorInfoFields, DocumentFields, StatusRight } from './GatePassViewPages';
 import { Dialog } from './GatePassModals';
 import { PASS_FEE, REJECTION_REASONS, HOST_APPROVALS_TITLE, HOST_ACTIONS, GATE_PASS_TITLE, shortRef, type GateRow } from './gatePassData';
 import type { ListingVariant } from './GatePassListingPage';
@@ -30,6 +30,21 @@ function ToneBtn({ tone, children, onClick, disabled }: { tone: 'red' | 'green';
     </button>
   );
 }
+
+/* One card per section — same layout as the Visitor Company forms */
+const DetailCards = ({ row }: { row: GateRow }) => (
+  <>
+    <GSection title="Pass Information" right={<StatusRight row={row} />}>
+      <PassInfoFields row={row} />
+    </GSection>
+    <GSection title="Visitor Information">
+      <VisitorInfoFields row={row} />
+    </GSection>
+    <GSection title="Document Details">
+      <DocumentFields />
+    </GSection>
+  </>
+);
 
 const PaymentSection = () => (
   <GSection title="Payment Information">
@@ -62,9 +77,7 @@ export function HostPassDetailsPage({ row, reviewable, onHome, onBack, onReturn,
         </>
       ) : undefined}
     >
-      <GSection title="Pass Information" right={<StatusRight row={shown} />}>
-        <PassFields row={shown} />
-      </GSection>
+      <DetailCards row={shown} />
       <PaymentSection />
       {reviewable && <GAgree checked={agree} onChange={setAgree}>{HOST_AGREEMENT}</GAgree>}
     </GatePage>
@@ -87,9 +100,7 @@ export function HostViewPassPage({ row, onHome, onBack, onReuse, onPrint }: {
         <PrimaryBtn onClick={onPrint}>Print Pass</PrimaryBtn>
       </>}
     >
-      <GSection title="Pass Information" right={<StatusRight row={row} />}>
-        <PassFields row={row} />
-      </GSection>
+      <DetailCards row={row} />
       <PaymentSection />
     </GatePage>
   );

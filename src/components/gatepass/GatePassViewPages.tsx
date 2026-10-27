@@ -17,46 +17,65 @@ export const StatusRight = ({ row }: { row: GateRow }) => (
   </div>
 );
 
-/* ── Pass + visitor fields (View Pass — Figma 9502:102589 — and Report Lost Pass) ── */
-export function PassFields({ row, visitor }: { row: GateRow; visitor?: Visitor }) {
+/* ── Field blocks — composed into one card (PassFields) or one card per section (Host Company pages) ── */
+export function PassInfoFields({ row }: { row: GateRow }) {
+  return (
+    <Grid4>
+      <GValue label="Application Number:" value={row.applicationNo} />
+      <GValue label="Pass Reference Number:" value={row.passRefNo} />
+      {row.accessType && <GValue label="Access Type:" value={row.accessType} />}
+      <GValue label="Port:" value={row.portName} />
+      <GValue label="Entry Gate:" value={row.entryGate} />
+      <GValue label="Pass Type:" value={row.passType} />
+      <GValue label="Pass Duration:" value={row.passDuration} />
+      <GValue label="Purpose of Visit" value={row.purpose} />
+      <GValue label="Date of Visit" value={row.dateOfVisit} />
+      <GValue label="Total Amount:"><GAmount value={PASS_FEE} /></GValue>
+      <GValue label="Host Company Name" value={row.hostCompany} />
+      {row.visitorCompany && <GValue label="Visitor Company" value={row.visitorCompany} />}
+    </Grid4>
+  );
+}
+
+export function VisitorInfoFields({ row, visitor }: { row: GateRow; visitor?: Visitor }) {
   const v = visitor ?? visitorFromRow(row);
   return (
+    <Grid4>
+      <GValue label="Title" value={v.title} />
+      <GValue label="First Name" value={v.firstName} />
+      <GValue label="Last Name" value={v.lastName} />
+      <GValue label="Nationality" value={row.nationality} />
+      <GValue label="Mobile" value={row.mobile} />
+      <GValue label="Email" value={row.email} />
+      <GValue label="Date of Birth" value={fromIso(v.dob) || row.dob} />
+      <GValue label="Designation" value={row.designation} />
+      <GValue label="Visa Type" value={v.visaType} />
+      <GValue label="Emirates ID Expiry Date" value={row.eidExpiry} />
+      <GValue label="Visa Expiry Date" value={row.visaExpiry} />
+      <GValue label="Company Name" value={v.companyName} />
+      <GValue label="Vehicle Number" value={v.vehicleNo} />
+      <GValue label="Driving License Number" value={row.drivingLicense} />
+    </Grid4>
+  );
+}
+
+export const DocumentFields = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
+    <GFileChip label="Personal Photo" file="filename.png" />
+  </div>
+);
+
+/* ── Pass + visitor fields in one card (View Pass — Figma 9502:102589 — and Report Lost Pass) ── */
+export function PassFields({ row, visitor }: { row: GateRow; visitor?: Visitor }) {
+  return (
     <>
-      <Grid4>
-        <GValue label="Application Number:" value={row.applicationNo} />
-        <GValue label="Pass Reference Number:" value={row.passRefNo} />
-        <GValue label="Port:" value={row.portName} />
-        <GValue label="Entry Gate:" value={row.entryGate} />
-        <GValue label="Pass Type:" value={row.passType} />
-        <GValue label="Pass Duration:" value={row.passDuration} />
-        <GValue label="Purpose of Visit" value={row.purpose} />
-        <GValue label="Date of Visit" value={row.dateOfVisit} />
-        <GValue label="Total Amount:"><GAmount value={PASS_FEE} /></GValue>
-        <GValue label="Host Company Name" value={row.hostCompany} />
-      </Grid4>
+      <PassInfoFields row={row} />
       <Divider />
       <GSubHead>Visitor Information</GSubHead>
-      <Grid4>
-        <GValue label="Title" value={v.title} />
-        <GValue label="First Name" value={v.firstName} />
-        <GValue label="Last Name" value={v.lastName} />
-        <GValue label="Nationality" value={row.nationality} />
-        <GValue label="Mobile" value={row.mobile} />
-        <GValue label="Email" value={row.email} />
-        <GValue label="Date of Birth" value={fromIso(v.dob) || row.dob} />
-        <GValue label="Designation" value={row.designation} />
-        <GValue label="Visa Type" value={v.visaType} />
-        <GValue label="Emirates ID Expiry Date" value={row.eidExpiry} />
-        <GValue label="Visa Expiry Date" value={row.visaExpiry} />
-        <GValue label="Company Name" value={v.companyName} />
-        <GValue label="Vehicle Number" value={v.vehicleNo} />
-        <GValue label="Driving License Number" value={row.drivingLicense} />
-      </Grid4>
+      <VisitorInfoFields row={row} visitor={visitor} />
       <Divider />
       <GSubHead>Document Details</GSubHead>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-        <GFileChip label="Personal Photo" file="filename.png" />
-      </div>
+      <DocumentFields />
     </>
   );
 }
