@@ -6,7 +6,7 @@ import { ColumnFilter } from '../ColumnFilter';
 import StatusFilterHeader from '../StatusFilterHeader';
 import { StatusAsOnBadge } from '../DatePicker';
 import { useTableBehaviors, DragDots, ScrollArrows } from '../../hooks/useTableBehaviors';
-import { font, GSelect, GDate, GInput, NeedHelp, ResetBtn } from './GateFields';
+import { font, GSelect, GDate, GInput, NeedHelp, ResetBtn, IconBtn } from './GateFields';
 import {
   GATE_ROWS, DRAFT_ROWS, GATE_STATUSES, STATUS_STYLE, STATUS_COLORS, SEARCH_FIELDS, ROW_ACTIONS,
   DOWNLOAD_OPTIONS, PORTS, PASS_TYPES, PASS_DURATIONS, NATIONALITIES, GENERATED_BY, HOST_SUBUSERS,
@@ -14,14 +14,36 @@ import {
   type GateRow, type GateStatus, type RowAction,
 } from './gatePassData';
 
+/** Lets another persona (Host Company) reuse this exact listing template with its own content. */
+export type ListingVariant = {
+  title: string;
+  columns: (ColDef & { w: number })[];
+  defaultVisible: string[];
+  actions: string[];
+  statuses: string[];
+  createLabel: string;
+  searchFields: string[];
+  /** 'approval' = edit icon for Pending rows, eye icon otherwise (Pass Approvals tab) */
+  actionMode?: 'kebab' | 'approval';
+  /** Hide the Drafts toggle (Pass Approvals has no drafts) */
+  hideDrafts?: boolean;
+  /** Hide the primary button (Create / Apply New Pass) */
+  hideCreate?: boolean;
+};
+
 type Props = {
+  variant?: ListingVariant;
+  /** Tabs shown under the title (Host Company: All Requests / Pass Approvals) */
+  tabs?: { key: string; label: string; count?: number }[];
+  activeTab?: string;
+  onTabChange?: (key: string) => void;
   rows?: GateRow[];
   drafts?: GateRow[];
   /** Open with the Drafts toggle on ("View All Drafts"). */
   initialShowDrafts?: boolean;
   onClose: () => void;
   onCreate: () => void;
-  onAction: (action: RowAction, row: GateRow) => void;
+  onAction: (action: string, row: GateRow) => void;
   onOpenDraft: (row: GateRow) => void;
 };
 
@@ -131,21 +153,23 @@ const XCircle = () => (
     <circle cx="12" cy="12" r="9" /><path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
   </svg>
 );
-const ACTION_ICONS: Record<RowAction, React.ReactNode> = {
+const ACTION_ICONS: Record<string, React.ReactNode> = {
   'View Request': <Eye />, 'Report Lost Pass': <Doc />, 'Renew Pass': <Doc />,
   'Cancel Request': <XCircle />, 'View Gate Pass': <Eye />, 'Print Pass': <Doc />,
 };
 
-function ActionFlyout({ onPick, onClose }: { onPick: (a: RowAction) => void; onClose: () => void }) {
+const actionIcon = (label: string) => ACTION_ICONS[label] ?? (/^view/i.test(label) ? <Eye /> : /cancel/i.test(label) ? <XCircle /> : <Doc />);
+
+function ActionFlyout({ actions = ROW_ACTIONS as readonly string[], onPick, onClose }: { actions?: readonly string[]; onPick: (a: string) => void; onClose: () => void }) {
   const ref = useOutside(true, onClose);
   return (
     <div ref={ref} className="absolute z-[120] right-0 bg-white rounded-[10px] py-[8px] overflow-hidden"
       style={{ top: 36, width: 220, boxShadow: '0px 4px 20px rgba(0,0,0,0.14)', border: '1px solid #f0f0f5' }}>
-      {ROW_ACTIONS.map(label => (
+      {actions.map(label => (
         <button key={label} onClick={() => onPick(label)}
           className="w-full px-[16px] py-[11px] text-left text-[16px] text-[#111838] hover:bg-[#e2ebf9] transition-colors flex items-center gap-[12px]"
           style={{ fontFamily: font }}>
-          {ACTION_ICONS[label]}
+          {actionIcon(label)}
           <span className="whitespace-nowrap">{label}</span>
         </button>
       ))}
@@ -172,9 +196,9 @@ const Chevron = ({ onClick }: { onClick: () => void }) => (
 );
 
 /* ── Card view (Figma 109:7422) ── */
-function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft }: {
+function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft, actions }: {
   row: GateRow; draft: boolean; selected: boolean; onToggle: () => void;
-  onAction: (a: RowAction) => void; onOpenDraft: () => void;
+  onAction: (a: string) => void; onOpenDraft: () => void; actions?: readonly string[];
 }) {
   const [open, setOpen] = useState(false);
   const st = STATUS_STYLE[row.status];
@@ -208,7 +232,7 @@ function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft }: {
         </div>
         <div className="relative flex-shrink-0">
           {draft ? <Chevron onClick={onOpenDraft} /> : <Kebab onClick={() => setOpen(o => !o)} />}
-          {open && <ActionFlyout onPick={a => { setOpen(false); onAction(a); }} onClose={() => setOpen(false)} />}
+          {open && <ActionFlyout actions={actions} onPick={a => { setOpen(false); onAction(a); }} onClose={() => setOpen(false)} />}
         </div>
       </div>
 
@@ -240,28 +264,41 @@ function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft }: {
   );
 }
 
-export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_ROWS, initialShowDrafts = false, onClose, onCreate, onAction, onOpenDraft }: Props) {
+export default function GatePassListingPage({ variant, tabs, activeTab, onTabChange, rows = GATE_ROWS, drafts = DRAFT_ROWS, initialShowDrafts = false, onClose, onCreate, onAction, onOpenDraft }: Props) {
+  /* Content comes from the variant when another persona reuses the template */
+  const v = {
+    title: variant?.title ?? GATE_PASS_TITLE,
+    columns: variant?.columns ?? COL_DEFS,
+    defaultVisible: variant?.defaultVisible ?? DEFAULT_VISIBLE,
+    actions: variant?.actions ?? (ROW_ACTIONS as readonly string[]),
+    statuses: variant?.statuses ?? (GATE_STATUSES as string[]),
+    createLabel: variant?.createLabel ?? 'Create',
+    searchFields: variant?.searchFields ?? SEARCH_FIELDS,
+    actionMode: variant?.actionMode ?? 'kebab',
+    hideDrafts: !!variant?.hideDrafts,
+    hideCreate: !!variant?.hideCreate,
+  };
   const [view, setView] = useState<'list' | 'card'>('list');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
-  const [searchType, setSearchType] = useState(SEARCH_FIELDS[0]);
+  const [searchType, setSearchType] = useState(v.searchFields[0]);
   const [searchValue, setSearchValue] = useState('');
   const [searchDropOpen, setSearchDropOpen] = useState(false);
   const [afOpen, setAfOpen] = useState(false);
   const [openFlyout, setOpenFlyout] = useState<number | null>(null);
   const [showColModal, setShowColModal] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<GateStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showDrafts, setShowDrafts] = useState(initialShowDrafts);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState('2022-12-28');
   const [dateTo, setDateTo] = useState('2023-01-10');
   const [af, setAf] = useState<Record<string, string>>({});
   const [applied, setApplied] = useState<Record<string, string>>({});
-  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_VISIBLE);
+  const [visibleCols, setVisibleCols] = useState<string[]>(v.defaultVisible);
 
   const searchRef = useOutside(searchDropOpen, () => setSearchDropOpen(false));
 
-  const visibleHeaders = visibleCols.map(k => COL_DEFS.find(c => c.key === k)!).filter(Boolean);
+  const visibleHeaders = visibleCols.map(k => v.columns.find(c => c.key === k)!).filter(Boolean);
 
   const {
     tableRef, scrollRef,
@@ -288,6 +325,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
     const val =
       searchType === 'Pass Reference No.' ? r.passRefNo :
       searchType === 'Visitor Name' ? r.visitorName :
+      searchType === 'Visitor Company' ? (r.visitorCompany ?? '') :
       searchType === 'Passport No.' ? r.passportNo : r.applicationNo;
     return has(val, searchValue);
   });
@@ -307,13 +345,13 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
     return next;
   });
 
-  const pick = (a: RowAction, row: GateRow) => { setOpenFlyout(null); onAction(a, row); };
+  const pick = (a: string, row: GateRow) => { setOpenFlyout(null); onAction(a, row); };
 
   return (
     <>
       {showColModal && (
         <ManageColumnsModal
-          columns={COL_DEFS}
+          columns={v.columns}
           visible={visibleCols}
           lockedColumns={[{ key: '_status', label: 'Application Status' }, { key: '_action', label: 'Actions' }]}
           onSave={setVisibleCols}
@@ -334,7 +372,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
               <span className="text-[#dc3545] px-[4px]">/</span>
               <span className="text-[#8f94ae] cursor-pointer hover:text-[#1360d2]" onClick={onClose}>Service Catalog</span>
               <span className="text-[#dc3545] px-[4px]">/</span>
-              <span className="text-[#111838] font-medium">{GATE_PASS_TITLE}</span>
+              <span className="text-[#111838] font-medium">{v.title}</span>
             </div>
             <div className="px-[16px] py-[5px] rounded-[4px] text-[16px] text-[#0e1b3d]" style={{ background: '#e2ebf9', fontFamily: font }}>
               {AGENT_BANNER}
@@ -342,8 +380,29 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
           </div>
 
           <h1 className="text-[32px] font-bold text-[#0e1b3d] mb-[22px]" style={{ fontFamily: font }}>
-            {GATE_PASS_TITLE}
+            {v.title}
           </h1>
+
+          {/* Tabs (Host Company: All Requests / Pass Approvals) */}
+          {tabs && tabs.length > 0 && (
+            <div className="flex items-center gap-[10px] border-b border-[#e2e8f5] mb-[20px] overflow-x-auto" role="tablist">
+              {tabs.map(t => {
+                const on = t.key === activeTab;
+                return (
+                  <button key={t.key} role="tab" aria-selected={on} onClick={() => onTabChange?.(t.key)}
+                    className="flex items-center gap-[8px] px-[18px] pb-[14px] pt-[6px] text-[16px] whitespace-nowrap transition-colors flex-shrink-0"
+                    style={{ fontFamily: font, color: on ? '#1360d2' : '#5a6478', fontWeight: on ? 600 : 400,
+                      borderBottom: on ? '3px solid #1360d2' : '3px solid transparent', marginBottom: -1 }}>
+                    {t.label}
+                    {t.count !== undefined && (
+                      <span className="text-[13px] px-[8px] py-[1px] rounded-[10px]"
+                        style={{ background: on ? '#e2ebf9' : '#eef1f7', color: on ? '#1360d2' : '#697498', fontWeight: 600 }}>{t.count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Toolbar — row 1 */}
           <div className="flex items-center gap-[12px] mb-[14px] flex-wrap">
@@ -374,7 +433,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
               {searchDropOpen && (
                 <div className="absolute left-0 top-[52px] bg-white rounded-[10px] py-[8px] z-[200]"
                   style={{ minWidth: 230, boxShadow: '0 4px 20px rgba(0,0,0,0.14)', border: '1px solid #f0f0f5' }}>
-                  {SEARCH_FIELDS.map(f => (
+                  {v.searchFields.map(f => (
                     <button key={f} className="w-full px-[16px] py-[11px] text-left hover:bg-[#e2ebf9] transition-colors"
                       onClick={() => { setSearchType(f); setSearchValue(''); setSearchDropOpen(false); }}>
                       <span className="text-[16px] text-[#111838]" style={{ fontFamily: font }}>{f}</span>
@@ -396,8 +455,8 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
               </div>
             </div>
 
-            <ToolbarDropdown label="Status" options={GATE_STATUSES} value={statusFilter} allLabel="— All —"
-              onPick={v => { setStatusFilter(v as GateStatus | null); setPage(1); }} />
+            <ToolbarDropdown label="Status" options={v.statuses} value={statusFilter} allLabel="— All —"
+              onPick={x => { setStatusFilter(x); setPage(1); }} />
 
             <div className="flex-1" />
 
@@ -423,13 +482,15 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
 
             <NeedHelp />
 
-            <button
-              onClick={onCreate}
-              className="h-[48px] w-[171px] rounded-[4px] text-[16px] text-white hover:opacity-90 transition-opacity"
-              style={{ background: '#1360d2', fontFamily: font, fontWeight: 500 }}
-            >
-              Create
-            </button>
+            {!v.hideCreate && (
+              <button
+                onClick={onCreate}
+                className="h-[48px] min-w-[171px] px-[20px] rounded-[4px] text-[16px] text-white hover:opacity-90 transition-opacity whitespace-nowrap"
+                style={{ background: '#1360d2', fontFamily: font, fontWeight: 500 }}
+              >
+                {v.createLabel}
+              </button>
+            )}
           </div>
 
           {/* Advanced filters panel (Figma 109:6497) */}
@@ -474,7 +535,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
               disabled={afOpen}
             />
             <div className="lg:absolute right-0 flex items-center gap-[12px] ml-auto lg:ml-0">
-              <label className="flex items-center gap-[10px] cursor-pointer select-none">
+              {!v.hideDrafts && <label className="flex items-center gap-[10px] cursor-pointer select-none">
                 <button
                   role="switch" aria-checked={showDrafts}
                   onClick={() => { setShowDrafts(d => !d); setPage(1); setOpenFlyout(null); }}
@@ -485,7 +546,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
                     style={{ background: showDrafts ? '#1360d2' : '#fff', transform: showDrafts ? 'translateX(21px)' : 'translateX(3px)' }} />
                 </button>
                 <span className="text-[18px] text-[#697498]" style={{ fontFamily: font }}>Drafts</span>
-              </label>
+              </label>}
               <ToolbarDropdown label="Download" options={DOWNLOAD_OPTIONS} onPick={() => {}} align="right" />
               <button
                 onClick={() => setShowColModal(true)}
@@ -504,7 +565,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
           {view === 'card' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[20px]">
               {paginated.map(row => (
-                <PassCard key={row.applicationNo} row={row} draft={showDrafts}
+                <PassCard key={row.applicationNo} row={row} draft={showDrafts} actions={v.actions}
                   selected={selected.has(row.applicationNo)}
                   onToggle={() => toggleSelect(row.applicationNo)}
                   onAction={a => pick(a, row)}
@@ -579,9 +640,9 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
                         ) : (
                           <StatusFilterHeader
                             label="Application Status"
-                            options={GATE_STATUSES}
+                            options={v.statuses}
                             value={statusFilter}
-                            onChange={v => { setStatusFilter(v as GateStatus | null); setPage(1); }}
+                            onChange={x => { setStatusFilter(x); setPage(1); }}
                             colorMap={STATUS_COLORS}
                           />
                         )}
@@ -621,7 +682,7 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
                                 style={col.key === 'passRefNo' && !showDrafts
                                   ? { color: '#1360d2', fontWeight: 500, cursor: 'pointer' }
                                   : { color: '#0e1b3d' }}
-                                onClick={col.key === 'passRefNo' && !showDrafts ? () => onAction('View Request', row) : undefined}
+                                onClick={col.key === 'passRefNo' && !showDrafts ? () => onAction(v.actionMode === 'approval' ? (row.status === 'Pending' ? 'Review' : 'View') : (v.actions[0] ?? 'View Request'), row) : undefined}
                               >
                                 {row[col.key as keyof GateRow]}
                               </span>
@@ -653,12 +714,19 @@ export default function GatePassListingPage({ rows = GATE_ROWS, drafts = DRAFT_R
                               {showDrafts ? (
                                 <Chevron onClick={() => onOpenDraft(row)} />
                               ) : (
+                                v.actionMode === 'approval' ? (
+                                  /* Pass Approvals: edit for pending requests, view for decided ones */
+                                  row.status === 'Pending'
+                                    ? <IconBtn kind="edit" label={`Review ${row.passRefNo}`} onClick={() => onAction('Review', row)} />
+                                    : <IconBtn kind="view" label={`View ${row.passRefNo}`} onClick={() => onAction('View', row)} />
+                                ) : (
                                 <>
                                   <Kebab onClick={() => setOpenFlyout(openFlyout === i ? null : i)} />
                                   {openFlyout === i && (
-                                    <ActionFlyout onPick={a => pick(a, row)} onClose={() => setOpenFlyout(null)} />
+                                    <ActionFlyout actions={v.actions} onPick={a => pick(a, row)} onClose={() => setOpenFlyout(null)} />
                                   )}
                                 </>
+                                )
                               )}
                             </div>
                           </td>

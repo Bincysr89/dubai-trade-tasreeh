@@ -3,7 +3,7 @@ import { font, GTag, toneFor, PrimaryBtn, SecondaryBtn } from './GateFields';
 import { type GateRow } from './gatePassData';
 
 /* Dimmed overlay + centred white dialog, closed on Escape / backdrop click. */
-function Dialog({ onClose, width, children }: { onClose: () => void; width: number; children: ReactNode }) {
+export function Dialog({ onClose, width, children }: { onClose: () => void; width: number; children: ReactNode }) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', h);

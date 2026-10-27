@@ -6,7 +6,12 @@ import { GatePassViewPage, GatePassPassPage, GatePassReportLostPage } from './Ga
 import GatePassSuccessPage, { GatePassDraftSavedPage } from './GatePassSuccessPage';
 import { GatePassPreviewModal, CancelRequestModal, Toast } from './GatePassModals';
 import {
-  GATE_ROWS, DRAFT_ROWS, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, ZONE_PORTS,
+  HostPassDetailsPage, HostViewPassPage, HostDecisionPage, ApproveConfirmModal, RejectModal, ReturnModal,
+  HOST_ALL_VARIANT, HOST_APPROVALS_VARIANT, type Decision,
+} from './HostGatePassPages';
+import { getPersona } from '../../persona';
+import {
+  GATE_ROWS, DRAFT_ROWS, HOST_ROWS, APPROVAL_ROWS, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, ZONE_PORTS,
   formFromRow, shortRef, fromIso, perPassAmount, money,
   type GateRow, type GateStatus, type GatePassForm, type RowAction, type Visitor, type PassCategory,
 } from './gatePassData';
@@ -24,7 +29,13 @@ type Step =
   | { kind: 'pass'; row: GateRow; visitor?: Visitor; backToView: boolean }
   | { kind: 'lost'; row: GateRow }
   | { kind: 'success'; row: GateRow; amount: string; heading?: string; form?: GatePassForm }
-  | { kind: 'draftSaved'; row: GateRow; form: GatePassForm };
+  | { kind: 'draftSaved'; row: GateRow; form: GatePassForm }
+  /* Host Company persona */
+  | { kind: 'hostReview'; row: GateRow; reviewable: boolean }
+  | { kind: 'hostDecision'; row: GateRow; decision: Decision; date: string }
+  | { kind: 'hostPass'; row: GateRow };
+
+type HostTab = 'all' | 'approvals';
 
 const fmt = (d: Date) => `${String(d.getDate()).padStart(2, '0')}-${d.toLocaleString('en-GB', { month: 'short' })}-${d.getFullYear()}`;
 const today = () => fmt(new Date());
@@ -38,7 +49,7 @@ const inOneMonth = () => { const d = new Date(); d.setMonth(d.getMonth() + 1); r
  */
 export default function GatePassFlow({ onClose }: Props) {
   const [step, setStep] = useState<Step>({ kind: 'listing' });
-  const [rows, setRows] = useState<GateRow[]>(GATE_ROWS);
+  const [rows, setRows] = useState<GateRow[]>(() => (getPersona() === 'host-company' ? HOST_ROWS : GATE_ROWS));
   const [drafts, setDrafts] = useState<GateRow[]>(DRAFT_ROWS);
   /* Visitors captured on the form, per application, for the View Pass table. */
   const [visitorsByApp, setVisitorsByApp] = useState<Record<string, Visitor[]>>({});
@@ -48,7 +59,20 @@ export default function GatePassFlow({ onClose }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const clearToast = useCallback(() => setToast(null), []);
 
+  /* Host Company persona: All Requests + Pass Approvals tabs */
+  const [isHost] = useState(() => getPersona() === 'host-company');
+  const [hostTab, setHostTab] = useState<HostTab>('all');
+  const [approvalRows, setApprovalRows] = useState<GateRow[]>(APPROVAL_ROWS);
+  const [modal, setModal] = useState<{ kind: 'approve' | 'reject' | 'return'; row: GateRow } | null>(null);
+
   const toListing = (showDrafts = false) => setStep({ kind: 'listing', drafts: showDrafts });
+  const toApprovals = () => { setHostTab('approvals'); setStep({ kind: 'listing' }); };
+
+  const decide = (row: GateRow, decision: Decision) => {
+    setApprovalRows(prev => prev.map(r => r.passRefNo === row.passRefNo ? { ...r, status: decision } : r));
+    setModal(null);
+    setStep({ kind: 'hostDecision', row: { ...row, status: decision }, decision, date: today() });
+  };
 
   /* Turn the form into a listing row (first visitor names the row). */
   const rowFromForm = (f: GatePassForm, status: GateStatus, seq: number): GateRow => {
@@ -58,7 +82,7 @@ export default function GatePassFlow({ onClose }: Props) {
       ...base,
       applicationNo: `123545648${seq}`,
       passRefNo: status === 'Draft' ? '-' : `GP-${121324 + seq}`,
-      portName: f.category === 'zone' ? `${f.zone || 'Zone'} (${(ZONE_PORTS[f.zone] ?? []).join(', ')})` : f.portName || '-',
+      portName: f.category === 'zone' ? (f.zone ? `${f.zone} (${(ZONE_PORTS[f.zone] ?? []).join(', ')})` : '-') : f.portName || '-',
       entryGate: f.entryGate || '-',
       passType: f.passType || '-',
       passDuration: f.passDuration || '-',
@@ -80,7 +104,9 @@ export default function GatePassFlow({ onClose }: Props) {
   };
 
   const submitForm = (f: GatePassForm) => {
-    const row = rowFromForm(f, 'Under Review', 900 + rows.length);
+    const row = isHost
+      ? { ...rowFromForm(f, 'Pending', 900 + rows.length), accessType: f.category === 'zone' ? 'Zone' : 'Port', approver: '--' }
+      : rowFromForm(f, 'Under Review', 900 + rows.length);
     setRows(prev => [row, ...prev]);
     setVisitorsByApp(prev => ({ ...prev, [row.applicationNo]: f.visitors }));
     const total = perPassAmount(f.passType, f.passDuration) * Math.max(1, f.visitors.length);
@@ -97,7 +123,7 @@ export default function GatePassFlow({ onClose }: Props) {
   const newForm = (category: PassCategory): GatePassForm =>
     ({ ...EMPTY_FORM, category, entryGate: category === 'zone' ? 'Any Gate' : '' });
 
-  const onAction = (a: RowAction, row: GateRow) => {
+  const onAction = (a: string, row: GateRow) => {
     switch (a) {
       case 'View Request':     setStep({ kind: 'view', row }); break;
       case 'Report Lost Pass': setStep({ kind: 'lost', row }); break;
@@ -105,6 +131,12 @@ export default function GatePassFlow({ onClose }: Props) {
       case 'Cancel Request':   setCancelRow(row); break;
       case 'View Gate Pass':   setStep({ kind: 'pass', row, backToView: false }); break;
       case 'Print Pass':       setPreview(row); break;
+      /* Host Company — All Requests flyout (Figma 1347:50348) + Pass Approvals icons */
+      case 'View':               setStep(hostTab === 'approvals' ? { kind: 'hostReview', row, reviewable: false } : { kind: 'hostPass', row }); break;
+      case 'Review':             setStep({ kind: 'hostReview', row, reviewable: true }); break;
+      case 'Edit':               setStep({ kind: 'form', initial: formFromRow(row), title: `Edit Request - ${shortRef(row)}` }); break;
+      case 'Reuse Pass Details': setStep({ kind: 'form', initial: formFromRow(row) }); break;
+      case 'Print Receipt':      window.print(); break;
     }
   };
 
@@ -119,6 +151,9 @@ export default function GatePassFlow({ onClose }: Props) {
             setCancelRow(null);
           }} />
       )}
+      {modal?.kind === 'approve' && <ApproveConfirmModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Approved')} />}
+      {modal?.kind === 'reject' && <RejectModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Rejected')} />}
+      {modal?.kind === 'return' && <ReturnModal onClose={() => setModal(null)} onConfirm={() => decide(modal.row, 'Returned')} />}
       {toast && <Toast message={toast} onDone={clearToast} />}
     </>
   );
@@ -231,7 +266,64 @@ export default function GatePassFlow({ onClose }: Props) {
       );
       break;
 
+    case 'hostReview': {
+      const s = step;
+      page = (
+        <HostPassDetailsPage
+          row={s.row}
+          reviewable={s.reviewable}
+          onHome={onClose}
+          onBack={toApprovals}
+          onReturn={() => setModal({ kind: 'return', row: s.row })}
+          onReject={() => setModal({ kind: 'reject', row: s.row })}
+          onApprove={() => setModal({ kind: 'approve', row: s.row })}
+        />
+      );
+      break;
+    }
+
+    case 'hostDecision':
+      page = <HostDecisionPage row={step.row} decision={step.decision} date={step.date} onHome={onClose} onBackToApprovals={toApprovals} />;
+      break;
+
+    case 'hostPass': {
+      const s = step;
+      page = (
+        <HostViewPassPage
+          row={s.row}
+          onHome={onClose}
+          onBack={() => toListing()}
+          onReuse={() => setStep({ kind: 'form', initial: formFromRow(s.row) })}
+          onPrint={() => setPreview(s.row)}
+        />
+      );
+      break;
+    }
+
     default:
+      if (isHost) {
+        const approvals = hostTab === 'approvals';
+        page = (
+          <GatePassListingPage
+            key={`host-${hostTab}-${step.drafts ? 'drafts' : 'passes'}`}
+            variant={approvals ? HOST_APPROVALS_VARIANT : HOST_ALL_VARIANT}
+            tabs={[
+              { key: 'all', label: 'All Requests', count: rows.length },
+              { key: 'approvals', label: 'Pass Approvals', count: approvalRows.filter(r => r.status === 'Pending').length },
+            ]}
+            activeTab={hostTab}
+            onTabChange={k => setHostTab(k as HostTab)}
+            rows={approvals ? approvalRows : rows}
+            drafts={drafts}
+            initialShowDrafts={!approvals && step.drafts}
+            onClose={onClose}
+            onCreate={() => setStep({ kind: 'start' })}
+            onAction={onAction}
+            onOpenDraft={row => setStep({ kind: 'form', initial: formByDraft[row.applicationNo] ?? formFromRow(row) })}
+          />
+        );
+        break;
+      }
       page = (
         <GatePassListingPage
           key={step.drafts ? 'drafts' : 'passes'}

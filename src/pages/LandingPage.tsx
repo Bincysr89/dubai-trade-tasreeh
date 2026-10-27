@@ -1,3 +1,4 @@
+import { setPersona, type Persona } from '../persona';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import Header from '../components/Header';
@@ -195,16 +196,19 @@ const JOURNEYS: Record<Agent, { title: string; airOnly?: boolean }> = {
 };
 
 const LABELS: Record<Agent, string> = {
-  trader: 'Trader',
-  'shipping-agent': 'Shipping Agent',
-  'airline-agent': 'Airline Agent',
+  trader: 'Visitor',
+  'shipping-agent': 'Visitor Company',
+  'airline-agent': 'Host Company',
   'other-agent': 'Other Agent',
 };
 
+/* Tasreeh personas: Visitor / Visitor Company / Host Company ride on the existing agent routes */
+const PERSONA_BY_AGENT: Record<Agent, Persona> = { trader: 'visitor', 'shipping-agent': 'visitor-company', 'airline-agent': 'host-company', 'other-agent': 'other' };
+
 const AGENT_TYPE_OPTIONS: { id: Agent; label: string; icon: React.ReactNode; route: string }[] = [
-  { id: 'trader', label: 'Trader', icon: <TraderIcon size={72} />, route: '/landing/trader' },
-  { id: 'shipping-agent', label: 'Shipping Agent', icon: <ShippingAgentIcon size={72} />, route: '/landing/shipping-agent' },
-  { id: 'airline-agent', label: 'Airline Agent', icon: <AirlineAgentIcon size={72} />, route: '/landing/airline-agent' },
+  { id: 'trader', label: 'Visitor', icon: <TraderIcon size={72} />, route: '/landing/trader' },
+  { id: 'shipping-agent', label: 'Visitor Company', icon: <ShippingAgentIcon size={72} />, route: '/landing/shipping-agent' },
+  { id: 'airline-agent', label: 'Host Company', icon: <AirlineAgentIcon size={72} />, route: '/landing/airline-agent' },
   { id: 'other-agent', label: 'Other Agent Type', icon: <OtherAgentIcon size={72} />, route: '/other-agent-type' },
 ];
 
@@ -466,7 +470,7 @@ export default function LandingPage() {
                 {AGENT_TYPE_OPTIONS.map(opt => (
                   <button
                     key={opt.id}
-                    onClick={() => { setShowAgentModal(false); navigate(opt.route); }}
+                    onClick={() => { setShowAgentModal(false); setPersona(PERSONA_BY_AGENT[opt.id]); navigate(opt.route); }}
                     className={`relative bg-white rounded-[12px] w-full max-w-[230px] h-[220px] flex flex-col items-start justify-between overflow-hidden transition-all
                       ${agent === opt.id
                         ? 'border-2 border-[#1360d2] shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]'

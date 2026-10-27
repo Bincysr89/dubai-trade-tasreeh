@@ -10,7 +10,7 @@ import { PASS_FEE, REISSUE_FEE, shortRef, fromIso, visitorFromRow, type GateRow,
 /* Listing "Successful" reads as "Completed" once the pass is issued. */
 const displayStatus = (r: GateRow) => (r.status === 'Successful' ? 'Completed' : r.status);
 
-const StatusRight = ({ row }: { row: GateRow }) => (
+export const StatusRight = ({ row }: { row: GateRow }) => (
   <div className="flex items-center gap-[8px]">
     <span className="text-[14px] text-[#1a1a1a]" style={{ fontFamily: font }}>Status:</span>
     <GTag label={displayStatus(row)} tone={toneFor(displayStatus(row))} />
@@ -18,7 +18,7 @@ const StatusRight = ({ row }: { row: GateRow }) => (
 );
 
 /* ── Pass + visitor fields (View Pass — Figma 9502:102589 — and Report Lost Pass) ── */
-function PassFields({ row, visitor }: { row: GateRow; visitor?: Visitor }) {
+export function PassFields({ row, visitor }: { row: GateRow; visitor?: Visitor }) {
   const v = visitor ?? visitorFromRow(row);
   return (
     <>

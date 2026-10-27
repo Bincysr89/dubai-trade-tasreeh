@@ -1,3 +1,4 @@
+import { setPersona, type Persona } from '../persona';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TraderIcon, ShippingAgentIcon, AirlineAgentIcon, OtherAgentIcon } from '../components/AgentIcons';
@@ -30,12 +31,15 @@ function CustomerCard({ label, icon, selected, onClick }: CardProps) {
   );
 }
 
+const PERSONA_BY_ID: Record<string, Persona> = { trader: 'visitor', shipping: 'visitor-company', airline: 'host-company', other: 'other' };
+
 export default function CustomerTypePage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string>('trader');
 
   const select = (id: string, target: string) => {
     setSelected(id);
+    setPersona(PERSONA_BY_ID[id] ?? 'other');
     setTimeout(() => navigate(target), 150);
   };
 
@@ -51,19 +55,19 @@ export default function CustomerTypePage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-[1080px] mx-auto place-items-center">
             <CustomerCard
-              label="Tasreeh persona type"
+              label="Visitor"
               selected={selected === 'trader'}
               onClick={() => select('trader', '/landing/trader')}
               icon={<TraderIcon size={72} />}
             />
             <CustomerCard
-              label="Shipping Agent"
+              label="Visitor Company"
               selected={selected === 'shipping'}
               onClick={() => select('shipping', '/landing/shipping-agent')}
               icon={<ShippingAgentIcon size={72} />}
             />
             <CustomerCard
-              label="Airline Agent"
+              label="Host Company"
               selected={selected === 'airline'}
               onClick={() => select('airline', '/landing/airline-agent')}
               icon={<AirlineAgentIcon size={72} />}

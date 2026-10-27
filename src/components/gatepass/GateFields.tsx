@@ -459,7 +459,7 @@ export function UploadGrid({ children }: { children: React.ReactNode }) {
 }
 
 /* Square icon buttons used in the Visitors Added action column */
-export function IconBtn({ kind, onClick, label }: { kind: 'edit' | 'delete' | 'open'; onClick: () => void; label: string }) {
+export function IconBtn({ kind, onClick, label }: { kind: 'edit' | 'delete' | 'open' | 'view'; onClick: () => void; label: string }) {
   const tone = kind === 'delete' ? { bg: 'rgba(220,53,69,0.10)', c: '#dc3545' } : { bg: '#e2ebf9', c: '#1360d2' };
   return (
     <button type="button" onClick={onClick} aria-label={label} title={label}
@@ -473,6 +473,11 @@ export function IconBtn({ kind, onClick, label }: { kind: 'edit' | 'delete' | 'o
       {kind === 'delete' && (
         <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 5h14M8 5V3h4v2M6 5l1 12h6l1-12M9 8v6M11 8v6" />
+        </svg>
+      )}
+      {kind === 'view' && (
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z" /><circle cx="12" cy="12" r="3" />
         </svg>
       )}
       {kind === 'open' && (

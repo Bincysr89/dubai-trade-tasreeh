@@ -21,7 +21,9 @@ export const TASREEH_SERVICES = [
 ];
 
 export type GateStatus =
-  | 'Successful' | 'Under Review' | 'Rejected' | 'Cancelled' | 'Expired' | 'Draft';
+  | 'Successful' | 'Under Review' | 'Rejected' | 'Cancelled' | 'Expired' | 'Draft'
+  /* Host Company approvals */
+  | 'Pending' | 'Approved' | 'Returned';
 
 export const GATE_STATUSES: GateStatus[] = ['Successful', 'Under Review', 'Rejected', 'Cancelled', 'Expired'];
 
@@ -32,6 +34,9 @@ export const STATUS_STYLE: Record<GateStatus, { bg: string; color: string }> = {
   'Cancelled':    { bg: 'rgba(105,116,152,0.10)', color: '#697498' },
   'Expired':      { bg: 'rgba(105,116,152,0.10)', color: '#697498' },
   'Draft':        { bg: 'rgba(19,96,210,0.10)',   color: '#1360d2' },
+  'Pending':      { bg: 'rgba(255,169,26,0.16)',  color: '#b45309' },
+  'Approved':     { bg: 'rgba(40,167,69,0.10)',   color: '#28a745' },
+  'Returned':     { bg: 'rgba(19,96,210,0.10)',   color: '#1360d2' },
 };
 
 export const STATUS_COLORS: Record<string, string> = Object.fromEntries(
@@ -127,6 +132,10 @@ export type GateRow = {
   submittedDate: string;
   validTill: string;
   status: GateStatus;
+  /* Host Company views */
+  accessType?: string;
+  visitorCompany?: string;
+  visitorEmail?: string;
 };
 
 const FIRST = ['Azan', 'Rahul', 'Omar', 'Maria', 'Khalid', 'Sara', 'Imran', 'Daniel', 'Layla', 'Vikram', 'Hassan', 'Grace'];
@@ -255,3 +264,50 @@ export function lookupVisitor(gender: string): Pick<Visitor, 'title' | 'firstNam
 
 /* Short request number shown in page titles, e.g. "View Request - 121324". */
 export const shortRef = (r: GateRow) => (r.passRefNo !== '-' ? r.passRefNo.replace('GP-', '') : r.applicationNo.slice(-6));
+
+/* ──────────────────────────────────────────────────────────────
+   Host Company persona (Tasreeh-Dev Figma 1347:49911 / 1347:50349)
+   ────────────────────────────────────────────────────────────── */
+export const HOST_TITLE = 'Pass Management';
+export const HOST_APPROVALS_TITLE = 'Pass Approvals';
+
+/* All Requests three-dot flyout (Figma 1347:50348) */
+export const HOST_ACTIONS = ['View', 'Edit', 'Reuse Pass Details', 'Renew Pass', 'Print Pass', 'Print Receipt', 'Report Lost Pass'];
+
+const HOST_NAMES = ['Azan Ahmed', 'Kristin Watson', 'Jane Cooper', 'Esther Howard', 'Theresa Webb', 'Jenny Wilson', 'Darlene Robertson', 'Marvin McKinney', 'Guy Hawkins', 'Brooklyn Simmons'];
+const HOST_STATUS: GateStatus[] = ['Pending', 'Approved', 'Rejected', 'Pending', 'Draft', 'Expired', 'Approved', 'Rejected', 'Draft', 'Expired'];
+const HOST_PORTS = ['Jebel Ali, Mina Rashid', 'Mina Rashid', 'Jebel Ali, Mina Rashid', 'Jebel Ali', 'Jebel Ali, Mina Rashid', 'JAFZA', 'Jebel Ali, Mina Rashid', 'Marfa Deira', 'Jebel Ali, Mina Rashid', 'Mina Rashid'];
+const HOST_DURATIONS = ['One Day', 'One Year', 'One Day', 'One Week', 'One Year', 'One Month', 'One Week', 'One Day', 'One Year', 'One Month'];
+const REFS = ['7725068610', '2377471239', '5205896212', '7111924081', '1565015004', '1883798829', '5101345246', '1641617565', '0500042814', '6072232892'];
+
+/* All Requests tab — passes this host company applied for */
+export const HOST_ROWS: GateRow[] = REFS.map((ref, i) => {
+  const [first, last] = HOST_NAMES[i].split(' ');
+  return {
+    ...row(i, HOST_STATUS[i]),
+    passRefNo: ref, accessType: i % 2 ? 'Port' : 'Zone', portName: HOST_PORTS[i],
+    passType: i % 2 ? 'Temporary' : 'Permanent', passDuration: HOST_DURATIONS[i],
+    visitorFirst: first, visitorLast: last, visitorName: HOST_NAMES[i],
+    email: `${first.toLowerCase()}.${last.toLowerCase()}@maersk.com`,
+    approver: HOST_STATUS[i] === 'Draft' || HOST_STATUS[i] === 'Expired' ? '--' : 'John Doe',
+  };
+});
+
+/* Pass Approvals tab — visitor-company requests waiting on this host company */
+const APPROVAL_STATUS: GateStatus[] = ['Pending', 'Pending', 'Pending', 'Pending', 'Approved', 'Rejected', 'Approved', 'Rejected', 'Expired', 'Expired'];
+const VISITOR_COMPANIES = ['Galaxy', 'Maersk Kakoo UAE LLC', 'Al Futtaim Logistics', 'Galaxy', 'Gulf Marine Services', 'Galaxy', 'DP World Logistics', 'Emirates Shipping', 'Galaxy', 'Al Futtaim Logistics'];
+const APPROVAL_VISITORS = ['Robert Fox', 'Kristin Watson', 'Floyd Miles', 'Brooklyn Simmons', 'Ronald Richards', 'Arlene McCoy', 'Annette Black', 'Guy Hawkins', 'Wade Warren', 'Bessie Cooper'];
+export const APPROVAL_ROWS: GateRow[] = REFS.map((ref, i) => {
+  const [first, last] = APPROVAL_VISITORS[i].split(' ');
+  const email = `${first.toLowerCase()}.${last.toLowerCase()}@${VISITOR_COMPANIES[i].split(' ')[0].toLowerCase()}.com`;
+  return {
+    ...row(i + 40, APPROVAL_STATUS[i]),
+    passRefNo: ref, applicationNo: `12354564${8700 + i}`,
+    passType: i % 2 ? 'Temporary' : 'Permanent', dateOfVisit: '31-Jan-2024', submittedDate: '31-Jan-2024',
+    visitorFirst: first, visitorLast: last, visitorName: APPROVAL_VISITORS[i],
+    visitorCompany: VISITOR_COMPANIES[i], companyName: VISITOR_COMPANIES[i], visitorEmail: email, email,
+    hostCompany: 'Dubai Trade', approver: 'John Doe',
+  };
+});
+
+export const REJECTION_REASONS = ['Incomplete visitor information', 'Invalid or expired documents', 'Visit not authorised by host', 'Security clearance not granted', 'Other'];
