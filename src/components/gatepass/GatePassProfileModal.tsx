@@ -13,7 +13,7 @@ export type GatePassProfile = 'individual' | 'company';
 
 const OPTIONS: { id: GatePassProfile; label: string; sub: string; icon: JSX.Element }[] = [
   {
-    id: 'individual', label: 'Individual', sub: 'Apply and manage gate passes for yourself',
+    id: 'individual', label: 'Visitor', sub: 'Apply and manage gate passes for yourself',
     icon: (
       <svg viewBox="0 0 48 48" width="52" height="52" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="24" cy="16" r="7.5" /><path d="M9.5 41c1.4-8 7.3-12.5 14.5-12.5S37.1 33 38.5 41" />

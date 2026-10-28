@@ -202,7 +202,7 @@ const LABELS: Record<Agent, string> = {
   'shipping-agent': 'Visitor Company',
   'airline-agent': 'Host Company',
   'other-agent': 'Other Agent',
-  individual: 'Individual',
+  individual: 'Visitor',
 };
 
 
