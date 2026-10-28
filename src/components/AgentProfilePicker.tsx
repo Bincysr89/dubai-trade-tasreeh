@@ -103,7 +103,7 @@ export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; rout
 ];
 
 /* Kept deliberately plain — a prototype switch, not part of the product design */
-export function SimulateFlowPanel({ profile, onPick, onClose }: {
+export function SimulateFlowPanel({ onPick, onClose }: {
   profile: AgentProfile; selected?: string; onPick: (f: typeof SIMULATE_FLOWS[number]) => void; onClose: () => void; hoverClass?: string;
 }) {
   return (
@@ -111,8 +111,7 @@ export function SimulateFlowPanel({ profile, onPick, onClose }: {
       <button onClick={onClose} aria-label="Close" className="absolute right-[16px] top-[16px] text-[#5a6478] hover:text-[#0e1b3d]">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
       </button>
-      <p className="text-[18px] font-medium text-[#0e1b3d] pr-[28px]">{profile.label}</p>
-      <p className="text-[14px] text-[#5a6478] mt-[8px] mb-[20px] leading-[21px]">
+      <p className="text-[18px] font-medium text-[#0e1b3d] pr-[28px] mb-[20px] leading-[26px]">
         This is only to simulate the flow from a design perspective, not for development.
       </p>
       <div className="flex flex-col gap-[10px]">
