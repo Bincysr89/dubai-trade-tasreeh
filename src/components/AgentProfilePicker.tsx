@@ -5,13 +5,13 @@ import type { Persona } from '../persona';
    (CustomerTypePage) and the landing page's profile switcher.
    Each agent profile keeps its Tasreeh persona flow.
    ────────────────────────────────────────────────────────────── */
-export type AgentProfile = { id: string; label: string; persona: Persona; route: string };
+export type AgentProfile = { id: string; label: string; company: string; persona: Persona; route: string };
 
 export const AGENT_PROFILES: AgentProfile[] = [
-  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  persona: 'visitor-company', route: '/landing/shipping-agent' },
-  { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C', persona: 'visitor-company', route: '/landing/shipping-agent' },
-  { id: 'airline',  label: '32704 - DCAA Member - Sandbox Company no 1',                      persona: 'host-company',    route: '/landing/airline-agent' },
-  { id: 'other',    label: 'Select Other Agent Type',                                         persona: 'other',           route: '/other-agent-type' },
+  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  company: 'Company Name',              persona: 'visitor-company', route: '/landing/shipping-agent' },
+  { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C', company: 'SWBRO01 M&M Private L.L.C', persona: 'visitor-company', route: '/landing/shipping-agent' },
+  { id: 'airline',  label: '32704 - DCAA Member - Sandbox Company no 1',                      company: 'Sandbox Company no 1',      persona: 'host-company',    route: '/landing/airline-agent' },
+  { id: 'other',    label: 'Select Other Agent Type',                                         company: 'Company Name',              persona: 'other',           route: '/other-agent-type' },
 ];
 
 /* Remember which card was picked (two profiles share the Visitor Company flow) */

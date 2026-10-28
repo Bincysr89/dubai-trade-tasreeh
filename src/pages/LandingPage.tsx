@@ -221,6 +221,8 @@ export default function LandingPage() {
   /* Highlight the agent profile in use (picked card, else the one whose flow this landing belongs to) */
   const currentProfile = rememberedAgentProfile()
     ?? AGENT_PROFILES.find(p => p.route === `/landing/${agent}`)?.id ?? '';
+  /* The profile card shows the company of the agent profile in use */
+  const currentCompany = AGENT_PROFILES.find(p => p.id === currentProfile)?.company ?? 'Company Name';
   /* Individual = UAE PASS basic account (User Management Figma 16178:16203) */
   const location = useLocation();
   const isIndividual = agent === 'individual';
@@ -282,9 +284,9 @@ export default function LandingPage() {
               ) : (<>
               <button
                 onClick={() => setShowAgentModal(true)}
-                className="border border-[#8a9099] rounded h-[36px] w-full text-[#0e1b3d] text-[18px] font-medium capitalize hover:border-[#1360d2] hover:text-[#1360d2] transition-colors"
+                className="border border-[#8a9099] rounded h-[36px] w-full min-w-0 text-[#0e1b3d] text-[18px] font-medium hover:border-[#1360d2] hover:text-[#1360d2] transition-colors"
               >
-                {LABELS[agent]}
+                <span className="block truncate px-[8px]">{currentCompany}</span>
               </button>
               <button className="bg-[#1360d2] text-white h-[35px] w-full rounded flex items-center justify-center gap-1 font-medium text-[16px] capitalize">
                 <svg viewBox="0 0 14 14" className="size-[14px]" fill="currentColor"><rect x="1" y="1" width="5" height="5" /><rect x="8" y="1" width="5" height="5" /><rect x="1" y="8" width="5" height="5" /><rect x="8" y="8" width="5" height="5" /></svg>
