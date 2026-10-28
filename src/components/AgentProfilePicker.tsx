@@ -1,14 +1,20 @@
+import type { ReactNode } from 'react';
 import type { Persona } from '../persona';
+import { ShippingAgentIcon, AirlineAgentIcon } from './AgentIcons';
 
 /* ──────────────────────────────────────────────────────────────
    "Select Agent Profile" cards — shared by the after-login popup
    (CustomerTypePage) and the landing page's profile switcher.
    Each agent profile keeps its Tasreeh persona flow.
    ────────────────────────────────────────────────────────────── */
-export type AgentProfile = { id: string; label: string; company: string; persona: Persona; route: string };
+export type AgentProfile = {
+  id: string; label: string; company: string; persona: Persona; route: string;
+  /** Ask which Tasreeh flow to simulate before landing (Visitor Company / Host Company) */
+  simulate?: boolean;
+};
 
 export const AGENT_PROFILES: AgentProfile[] = [
-  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  company: 'Company Name',              persona: 'visitor-company', route: '/landing/shipping-agent' },
+  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  company: 'Company Name',              persona: 'visitor-company', route: '/landing/shipping-agent', simulate: true },
   { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C', company: 'SWBRO01 M&M Private L.L.C', persona: 'visitor-company', route: '/landing/shipping-agent' },
   { id: 'airline',  label: '32704 - DCAA Member - Sandbox Company no 1',                      company: 'Sandbox Company no 1',      persona: 'host-company',    route: '/landing/airline-agent' },
   { id: 'other',    label: 'Select Other Agent Type',                                         company: 'Company Name',              persona: 'other',           route: '/other-agent-type' },
@@ -31,8 +37,8 @@ export const AgentProfileIcon = () => (
   </svg>
 );
 
-export function AgentCard({ label, selected, onClick, hoverClass = 'hover:border-[#0e1b3d]' }: {
-  label: string; selected?: boolean; onClick: () => void; hoverClass?: string;
+export function AgentCard({ label, selected, onClick, hoverClass = 'hover:border-[#0e1b3d]', icon }: {
+  label: string; selected?: boolean; onClick: () => void; hoverClass?: string; icon?: ReactNode;
 }) {
   return (
     <button
@@ -46,7 +52,7 @@ export function AgentCard({ label, selected, onClick, hoverClass = 'hover:border
         <span className="absolute -top-[56px] -right-[78px] w-[156px] h-[112px] rounded-full border border-[#ea2428]" />
       </span>
       <span className="flex-1 flex items-end justify-center pb-[24px]">
-        <AgentProfileIcon />
+        {icon ?? <AgentProfileIcon />}
       </span>
       <span className="w-full min-h-[100px] bg-[#f9f9f9] flex items-center justify-center px-[14px] py-[12px] text-center">
         <span className="text-[#0e1b3d] font-medium text-[17px] leading-[24px] line-clamp-3">{label}</span>
@@ -56,30 +62,59 @@ export function AgentCard({ label, selected, onClick, hoverClass = 'hover:border
   );
 }
 
-/* The popup body: navy title bar, heading and the four cards */
-export function AgentProfilePanel({ selected, onPick, onClose, hoverClass }: {
-  selected: string; onPick: (p: AgentProfile) => void; onClose: () => void; hoverClass?: string;
-}) {
+/* Popup shell: navy title bar with a circled close, then the body */
+function PanelShell({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="bg-white w-full max-w-[1260px] rounded-lg overflow-hidden shadow-2xl" role="dialog" aria-label="Select Agent Profile">
+    <div className="bg-white w-full max-w-[1260px] rounded-lg overflow-hidden shadow-2xl" role="dialog" aria-label={title}>
       <div className="bg-[#0e1b3d] px-[16px] h-[62px] flex items-center justify-between">
-        <h2 className="text-white font-bold text-[22px]">Select Agent Profile</h2>
+        <h2 className="text-white font-bold text-[22px]">{title}</h2>
         <button onClick={onClose} aria-label="Close" className="text-white hover:opacity-70">
           <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="14" cy="14" r="12" /><path d="M10 10l8 8M18 10l-8 8" strokeLinecap="round" />
           </svg>
         </button>
       </div>
-      <div className="px-6 sm:px-12 pt-[60px] pb-[64px]">
-        <h3 className="text-[#0e1b3d] text-[24px] sm:text-[26px] font-medium text-center mb-[56px]">
-          Hi User, Please select agent profile to access services
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[44px] max-w-[1040px] mx-auto place-items-center">
-          {AGENT_PROFILES.map(p => (
-            <AgentCard key={p.id} label={p.label} selected={selected === p.id} hoverClass={hoverClass} onClick={() => onPick(p)} />
-          ))}
-        </div>
-      </div>
+      <div className="px-6 sm:px-12 pt-[60px] pb-[64px]">{children}</div>
     </div>
+  );
+}
+
+/* The popup body: navy title bar, heading and the four cards */
+export function AgentProfilePanel({ selected, onPick, onClose, hoverClass }: {
+  selected: string; onPick: (p: AgentProfile) => void; onClose: () => void; hoverClass?: string;
+}) {
+  return (
+    <PanelShell title="Select Agent Profile" onClose={onClose}>
+      <h3 className="text-[#0e1b3d] text-[24px] sm:text-[26px] font-medium text-center mb-[56px]">
+        Hi User, Please select agent profile to access services
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[44px] max-w-[1040px] mx-auto place-items-center">
+        {AGENT_PROFILES.map(p => (
+          <AgentCard key={p.id} label={p.label} selected={selected === p.id} hoverClass={hoverClass} onClick={() => onPick(p)} />
+        ))}
+      </div>
+    </PanelShell>
+  );
+}
+
+/* 1298 - Tasreeh: choose which Tasreeh flow to simulate */
+export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; route: string; icon: ReactNode }[] = [
+  { id: 'sim-visitor', label: 'Simulate the Visitor Company Flow', persona: 'visitor-company', route: '/landing/shipping-agent', icon: <ShippingAgentIcon size={72} /> },
+  { id: 'sim-host',    label: 'Simulate Host Company Flow',        persona: 'host-company',    route: '/landing/airline-agent',  icon: <AirlineAgentIcon size={72} /> },
+];
+
+export function SimulateFlowPanel({ profile, selected, onPick, onClose, hoverClass }: {
+  profile: AgentProfile; selected?: string; onPick: (f: typeof SIMULATE_FLOWS[number]) => void; onClose: () => void; hoverClass?: string;
+}) {
+  return (
+    <PanelShell title="Select Flow" onClose={onClose}>
+      <h3 className="text-[#0e1b3d] text-[24px] sm:text-[26px] font-medium text-center">{profile.label}</h3>
+      <p className="text-[#5a6478] text-[17px] text-center mt-[8px] mb-[48px]">Choose the flow to simulate</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[44px] max-w-[520px] mx-auto place-items-center">
+        {SIMULATE_FLOWS.map(f => (
+          <AgentCard key={f.id} label={f.label} icon={f.icon} selected={selected === f.id} hoverClass={hoverClass} onClick={() => onPick(f)} />
+        ))}
+      </div>
+    </PanelShell>
   );
 }
