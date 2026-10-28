@@ -1,9 +1,10 @@
-import { getPersona } from '../persona';
+import { getPersona, type Persona } from '../persona';
 import { useState } from 'react';
 import Header from './Header';
 import supplierIconSrc from '../assets/icon-supplier.svg';
 import catalogueBg from '../assets/catalogue background.jpg';
 import GatePassFlow from './gatepass/GatePassFlow';
+import GatePassProfileModal, { type GatePassProfile } from './gatepass/GatePassProfileModal';
 import DelegationFlow from './delegation/DelegationFlow';
 import ServiceFlow from './tasreeh/ServiceFlow';
 import { SERVICE_REGISTRY } from './tasreeh/serviceConfigs';
@@ -80,11 +81,26 @@ const TASREEH = new Set(TASREEH_SERVICES);
 export default function SupplierDetailModal({ onClose }: Props) {
   const [LIVE] = useState(liveServices);
   const [individual] = useState(() => getPersona() === 'individual');
+  /* Company users (Visitor / Host Company) choose Individual or Company before Gate Passes */
+  const [persona] = useState<Persona>(getPersona);
+  const isCompany = persona === 'visitor-company' || persona === 'host-company';
+  const [chooseProfile, setChooseProfile] = useState(false);
+  const [gpProfile, setGpProfile] = useState<GatePassProfile | null>(null);
+  const openService = (item: string) => {
+    if (item === 'Tasreeh - Gate Passes' && isCompany) setChooseProfile(true);
+    else setService(item);
+  };
   const [search, setSearch] = useState('');
   const [service, setService] = useState<string | null>(null);
 
   if (service === 'Tasreeh - Gate Passes') {
-    return <GatePassFlow onClose={() => setService(null)} />;
+    return (
+      <GatePassFlow
+        key={gpProfile ?? 'default'}
+        profile={gpProfile === 'individual' ? 'individual' : undefined}
+        onClose={() => { setService(null); setGpProfile(null); }}
+      />
+    );
   }
   if (service === 'Tasreeh - Delegation Visits') {
     return <DelegationFlow onClose={() => setService(null)} />;
@@ -192,7 +208,7 @@ export default function SupplierDetailModal({ onClose }: Props) {
                       return (
                         <button
                           key={item}
-                          onClick={live ? () => setService(item) : undefined}
+                          onClick={live ? () => openService(item) : undefined}
                           className={`text-left px-[10px] rounded-[4px] text-[16px] transition-colors ${
                             live
                               ? 'bg-[#dce9ff] border border-[#1360d2] text-[#1360d2] hover:bg-[#c5d9ff] font-medium'
@@ -216,6 +232,13 @@ export default function SupplierDetailModal({ onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {chooseProfile && (
+        <GatePassProfileModal
+          onClose={() => setChooseProfile(false)}
+          onPick={p => { setChooseProfile(false); setGpProfile(p); setService('Tasreeh - Gate Passes'); }}
+        />
+      )}
     </div>
   );
 }

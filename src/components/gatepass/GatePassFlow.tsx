@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import GatePassListingPage from './GatePassListingPage';
 import GatePassStartPage from './GatePassStartPage';
 import GatePassFormPage from './GatePassFormPage';
@@ -10,9 +10,9 @@ import {
   HOST_ALL_VARIANT, HOST_APPROVALS_VARIANT, type Decision,
 } from './HostGatePassPages';
 import { IndividualPassFormPage, AmendPassPage, DeleteDraftModal, INDIVIDUAL_VARIANT } from './IndividualGatePassPages';
-import { getPersona } from '../../persona';
+import { getPersona, type Persona } from '../../persona';
 import {
-  GATE_ROWS, DRAFT_ROWS, HOST_ROWS, APPROVAL_ROWS, INDIVIDUAL_ROWS, INDIVIDUAL_DRAFTS, individualVisitor, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, PASS_FEE, ZONE_PORTS,
+  setBannerProfile, GATE_ROWS, DRAFT_ROWS, HOST_ROWS, APPROVAL_ROWS, INDIVIDUAL_ROWS, INDIVIDUAL_DRAFTS, individualVisitor, GATE_PASS_FORM_TITLE, EMPTY_FORM, REISSUE_FEE, PASS_FEE, ZONE_PORTS,
   formFromRow, shortRef, fromIso, perPassAmount, money,
   type GateRow, type GateStatus, type GatePassForm, type RowAction, type Visitor, type PassCategory,
 } from './gatePassData';
@@ -20,6 +20,8 @@ import {
 type Props = {
   /** Return to whatever opened the service (Supplier catalogue). */
   onClose: () => void;
+  /** Gate pass profile chosen by a company user (Individual / Company); defaults to the signed-in persona. */
+  profile?: Persona;
 };
 
 type Step =
@@ -50,13 +52,15 @@ const inOneMonth = () => { const d = new Date(); d.setMonth(d.getMonth() + 1); r
  * visitor search → confirm → add) → Submit → Success | Payment Failed, Save as Draft → Draft Saved,
  * plus row actions: View Request, Report Lost Pass, Renew Pass, Cancel Request, View Gate Pass, Print Pass.
  */
-export default function GatePassFlow({ onClose }: Props) {
+export default function GatePassFlow({ onClose, profile }: Props) {
+  const [persona] = useState<Persona>(() => { const p = profile ?? getPersona(); setBannerProfile(p); return p; });
+  useEffect(() => { setBannerProfile(persona); return () => setBannerProfile(null); }, [persona]);
   const [step, setStep] = useState<Step>({ kind: 'listing' });
   const [rows, setRows] = useState<GateRow[]>(() => {
-    const p = getPersona();
+    const p = persona;
     return p === 'host-company' ? HOST_ROWS : p === 'individual' ? INDIVIDUAL_ROWS : GATE_ROWS;
   });
-  const [drafts, setDrafts] = useState<GateRow[]>(() => (getPersona() === 'individual' ? INDIVIDUAL_DRAFTS : DRAFT_ROWS));
+  const [drafts, setDrafts] = useState<GateRow[]>(() => (persona === 'individual' ? INDIVIDUAL_DRAFTS : DRAFT_ROWS));
   /* Visitors captured on the form, per application, for the View Pass table. */
   const [visitorsByApp, setVisitorsByApp] = useState<Record<string, Visitor[]>>({});
   const [formByDraft, setFormByDraft] = useState<Record<string, GatePassForm>>({});
@@ -66,9 +70,9 @@ export default function GatePassFlow({ onClose }: Props) {
   const clearToast = useCallback(() => setToast(null), []);
 
   /* Host Company persona: All Requests + Pass Approvals tabs */
-  const [isHost] = useState(() => getPersona() === 'host-company');
+  const isHost = persona === 'host-company';
   /* Individual (UAE PASS basic account): applies for themselves, prefilled from the profile */
-  const [isIndividual] = useState(() => getPersona() === 'individual');
+  const isIndividual = persona === 'individual';
   const [deleteDraft, setDeleteDraft] = useState<GateRow | null>(null);
   const [hostTab, setHostTab] = useState<HostTab>('all');
   const [approvalRows, setApprovalRows] = useState<GateRow[]>(APPROVAL_ROWS);

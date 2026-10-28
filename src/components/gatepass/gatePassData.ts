@@ -9,7 +9,10 @@ export const GATE_PASS_TITLE = 'Tasreeh - Gate Passes';
 export const GATE_PASS_FORM_TITLE = 'Tasreeh - Gate Pass';
 export const AGENT_BANNER = 'A180-SHIPPING AGENT(A)-MAERSK KAKOO UAE LLC';
 /* The individual (UAE PASS) account has no agent code — show the account holder instead */
-export const agentBanner = () => (getPersona() === 'individual' ? 'INDIVIDUAL - AHMED AL MARRI' : AGENT_BANNER);
+/* A company user who picks "Individual" for gate passes sees the individual banner while in the flow */
+let bannerProfile: string | null = null;
+export const setBannerProfile = (p: string | null) => { bannerProfile = p; };
+export const agentBanner = () => ((bannerProfile ?? getPersona()) === 'individual' ? 'INDIVIDUAL - AHMED AL MARRI' : AGENT_BANNER);
 
 /* Gate Management column of the Supplier catalogue (Figma 1:6268) */
 export const TASREEH_SERVICES = [
