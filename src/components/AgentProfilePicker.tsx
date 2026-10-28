@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import type { Persona } from '../persona';
-import { ShippingAgentIcon, AirlineAgentIcon } from './AgentIcons';
 
 /* ──────────────────────────────────────────────────────────────
    "Select Agent Profile" cards — shared by the after-login popup
@@ -97,24 +96,33 @@ export function AgentProfilePanel({ selected, onPick, onClose, hoverClass }: {
   );
 }
 
-/* 1298 - Tasreeh: choose which Tasreeh flow to simulate */
-export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; route: string; icon: ReactNode }[] = [
-  { id: 'sim-visitor', label: 'Simulate the Visitor Company Flow', persona: 'visitor-company', route: '/landing/shipping-agent', icon: <ShippingAgentIcon size={72} /> },
-  { id: 'sim-host',    label: 'Simulate Host Company Flow',        persona: 'host-company',    route: '/landing/airline-agent',  icon: <AirlineAgentIcon size={72} /> },
+/* 1298 - Tasreeh: choose which Tasreeh flow to simulate (design walkthrough only) */
+export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; route: string }[] = [
+  { id: 'sim-visitor', label: 'Simulate the Visitor Company Flow', persona: 'visitor-company', route: '/landing/shipping-agent' },
+  { id: 'sim-host',    label: 'Simulate Host Company Flow',        persona: 'host-company',    route: '/landing/airline-agent' },
 ];
 
-export function SimulateFlowPanel({ profile, selected, onPick, onClose, hoverClass }: {
+/* Kept deliberately plain — a prototype switch, not part of the product design */
+export function SimulateFlowPanel({ profile, onPick, onClose }: {
   profile: AgentProfile; selected?: string; onPick: (f: typeof SIMULATE_FLOWS[number]) => void; onClose: () => void; hoverClass?: string;
 }) {
   return (
-    <PanelShell title="Select Flow" onClose={onClose}>
-      <h3 className="text-[#0e1b3d] text-[24px] sm:text-[26px] font-medium text-center">{profile.label}</h3>
-      <p className="text-[#5a6478] text-[17px] text-center mt-[8px] mb-[48px]">Choose the flow to simulate</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[44px] max-w-[520px] mx-auto place-items-center">
+    <div className="bg-white w-full max-w-[480px] mx-auto rounded-[8px] p-[28px] relative shadow-2xl" role="dialog" aria-label="Simulate flow">
+      <button onClick={onClose} aria-label="Close" className="absolute right-[16px] top-[16px] text-[#5a6478] hover:text-[#0e1b3d]">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+      </button>
+      <p className="text-[18px] font-medium text-[#0e1b3d] pr-[28px]">{profile.label}</p>
+      <p className="text-[14px] text-[#5a6478] mt-[8px] mb-[20px] leading-[21px]">
+        This is only to simulate the flow from a design perspective, not for development.
+      </p>
+      <div className="flex flex-col gap-[10px]">
         {SIMULATE_FLOWS.map(f => (
-          <AgentCard key={f.id} label={f.label} icon={f.icon} selected={selected === f.id} hoverClass={hoverClass} onClick={() => onPick(f)} />
+          <button key={f.id} onClick={() => onPick(f)}
+            className="h-[44px] rounded-[4px] border border-[#c9d2e3] text-[15px] text-[#0e1b3d] hover:border-[#1360d2] hover:text-[#1360d2]">
+            {f.label}
+          </button>
         ))}
       </div>
-    </PanelShell>
+    </div>
   );
 }
