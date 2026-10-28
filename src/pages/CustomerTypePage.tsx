@@ -6,7 +6,7 @@ import { setAuthenticated } from '../auth';
 /* ──────────────────────────────────────────────────────────────
    After-login "Select Agent Profile" popup. Each agent profile
    keeps its Tasreeh persona flow:
-   DC Member → Visitor · Air Clearing Agent → Visitor Company ·
+   1298 Tasreeh → Visitor · Air Clearing Agent → Visitor Company ·
    Tasreeh Member → Host Company · Other Agent Type → Other
    ────────────────────────────────────────────────────────────── */
 
@@ -43,7 +43,7 @@ function AgentCard({ label, selected, onClick }: CardProps) {
       <span className="flex-1 flex items-end justify-center pb-[24px]">
         <AgentProfileIcon />
       </span>
-      <span className="w-full min-h-[100px] bg-[#f7f9fd] flex items-center justify-center px-[14px] py-[12px] text-center">
+      <span className="w-full min-h-[100px] bg-[#f9f9f9] flex items-center justify-center px-[14px] py-[12px] text-center">
         <span className="text-[#0e1b3d] font-medium text-[17px] leading-[24px] line-clamp-3">{label}</span>
       </span>
       <span className="h-[20px] flex-shrink-0" />
@@ -54,7 +54,7 @@ function AgentCard({ label, selected, onClick }: CardProps) {
 const PERSONA_BY_ID: Record<string, Persona> = { trader: 'visitor', shipping: 'visitor-company', airline: 'host-company', other: 'other' };
 
 const PROFILES = [
-  { id: 'trader',   label: '1298 - DC Member - SWBRO01 Mnull Private L.L.C',                    target: '/landing/trader' },
+  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                       target: '/landing/trader' },
   { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C',    target: '/landing/shipping-agent' },
   { id: 'airline',  label: '32704 - Tasreeh Member - Sandbox Company no 1',                      target: '/landing/airline-agent' },
   { id: 'other',    label: 'Select Other Agent Type',                                            target: '/other-agent-type' },
@@ -62,7 +62,7 @@ const PROFILES = [
 
 export default function CustomerTypePage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string>('trader');
 
   const select = (id: string, target: string) => {
     setSelected(id);
