@@ -21,7 +21,7 @@ import DeclarationListPage from './DeclarationListPage';
 import CargoReconciliationPage from './discrepancy/CargoReconciliationPage';
 import CargoTrackingContainer from './cargotracking/CargoTrackingContainer';
 
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; /** Open straight on a service (header search). */ initialItem?: string };
 
 // DCAA/SIRA priority services shown first (and highlighted) in the Cargo Clearance column
 const DCAA_SIRA_SERVICES = [
@@ -49,7 +49,7 @@ const DM_CARGO_SERVICES = [
   'DM - Request for Food Export/Food Health Certificate',
 ];
 
-const SEA_COLUMNS: { title: string; items: string[] }[] = [
+export const SEA_COLUMNS: { title: string; items: string[] }[] = [
   {
     title: 'Registration',
     items: [
@@ -353,7 +353,7 @@ const PAGE_CONFIGS: Record<Exclude<PageKey, 'pbf' | 'dcc' | 'cargoInspection' | 
   },
 };
 
-const ITEM_PAGE_MAP: Record<string, PageKey> = {
+export const ITEM_PAGE_MAP: Record<string, PageKey> = {
   'Request Goods Landing Certificate':    'glc',
   'Bill Payment':                         'pbf',
   'Join Accreditation Program':           'jap',
@@ -396,9 +396,9 @@ const CWL_CONFIG: GenericServiceConfig = {
 };
 /* ─────────────────────────────────────────────────────────────────────── */
 
-export default function SeaDetailModal({ onClose }: Props) {
+export default function SeaDetailModal({ onClose, initialItem }: Props) {
   const [search, setSearch]         = useState('');
-  const [activePage, setActivePage] = useState<PageKey | null>(null);
+  const [activePage, setActivePage] = useState<PageKey | null>(initialItem ? ITEM_PAGE_MAP[initialItem] ?? null : null);
   // dccService: null=listing, 'chooser'=picker, then the actual service key
   const [dccService, setDccService] = useState<string | null>(null);
   const [dccViewRow, setDccViewRow] = useState<RowData | null>(null);

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Logo from './Logo';
 import ServiceCatalogueModal from './ServiceCatalogueModal';
+import ServiceSearchPage from './ServiceSearchPage';
 import homeIconSrc from '../assets/icon-home.svg';
 import { setAuthenticated } from '../auth';
 
@@ -12,14 +13,17 @@ type Props = {
   /** Set when this Header is inside the Service Catalogue itself — the button then
    *  closes the catalogue (via onServiceCatalogue) instead of opening a new one. */
   catalogueClosesOnClick?: boolean;
+  /** Set by the search page itself — the search icon then stays on that page. */
+  onSearch?: () => void;
 };
 
-export default function Header({ onServiceCatalogue, onHome, catalogueClosesOnClick }: Props) {
+export default function Header({ onServiceCatalogue, onHome, catalogueClosesOnClick, onSearch }: Props) {
   const navigate = useNavigate();
   const { agent } = useParams<{ agent?: string }>();
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const goHome = () => {
@@ -81,8 +85,9 @@ export default function Header({ onServiceCatalogue, onHome, catalogueClosesOnCl
               <path d="M3 6h18M3 12h18M3 18h18" />
             </svg>
           </button>
-          <button className="size-[40px] rounded-full border border-[rgba(213,221,251,0.4)] hidden sm:flex items-center justify-center text-white hover:bg-white/10">
-            <svg viewBox="0 0 18 18" width="18" height="18" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M11.76 10.27L17.49 16L16 17.49L10.27 11.76C9.2 12.53 7.91 13 6.5 13C2.91 13 0 10.09 0 6.5C0 2.91 2.91 0 6.5 0C10.09 0 13 2.91 13 6.5C13 7.91 12.53 9.2 11.76 10.27ZM6.5 2C4.01 2 2 4.01 2 6.5C2 8.99 4.01 11 6.5 11C8.99 11 11 8.99 11 6.5C11 4.01 8.99 2 6.5 2Z" fill="#0E1B3D"/></svg>
+          <button onClick={() => (onSearch ? onSearch() : setSearchOpen(true))} aria-label="Search services"
+            className="size-[40px] rounded-full border border-[rgba(213,221,251,0.4)] hidden sm:flex items-center justify-center text-white hover:bg-white/10">
+            <svg viewBox="0 0 18 18" width="18" height="18" fill="none"><path fillRule="evenodd" clipRule="evenodd" d="M11.76 10.27L17.49 16L16 17.49L10.27 11.76C9.2 12.53 7.91 13 6.5 13C2.91 13 0 10.09 0 6.5C0 2.91 2.91 0 6.5 0C10.09 0 13 2.91 13 6.5C13 7.91 12.53 9.2 11.76 10.27ZM6.5 2C4.01 2 2 4.01 2 6.5C2 8.99 4.01 11 6.5 11C8.99 11 11 8.99 11 6.5C11 4.01 8.99 2 6.5 2Z" fill="currentColor"/></svg>
           </button>
           <div className="relative">
             <button className="size-[40px] rounded-full border border-[rgba(213,221,251,0.4)] flex items-center justify-center text-white hover:bg-white/10">
@@ -145,6 +150,10 @@ export default function Header({ onServiceCatalogue, onHome, catalogueClosesOnCl
 
       {/* Service Catalogue overlay — opened from any page's header. Portaled to
           <body> so it escapes the header's z-40 sticky stacking context. */}
+      {searchOpen && createPortal(
+        <ServiceSearchPage onClose={() => setSearchOpen(false)} />,
+        document.body,
+      )}
       {catalogueOpen && createPortal(
         <ServiceCatalogueModal onClose={() => setCatalogueOpen(false)} />,
         document.body,

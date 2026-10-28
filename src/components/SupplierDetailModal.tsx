@@ -10,10 +10,10 @@ import ServiceFlow from './tasreeh/ServiceFlow';
 import { SERVICE_REGISTRY } from './tasreeh/serviceConfigs';
 import { TASREEH_SERVICES } from './gatepass/gatePassData';
 
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; /** Open straight on a service (header search). */ initialItem?: string };
 
 /* Service columns (Figma 1:6268) — Gate Management carries the Tasreeh services first. */
-const SUPPLIER_COLUMNS: { title: string; items: string[] }[] = [
+export const SUPPLIER_COLUMNS: { title: string; items: string[] }[] = [
   {
     title: 'Registration',
     items: [
@@ -75,23 +75,24 @@ const SUPPLIER_COLUMNS: { title: string; items: string[] }[] = [
 /* Services that open a working flow */
 const ALL_LIVE = ['Tasreeh - Gate Passes', 'Tasreeh - Delegation Visits', ...Object.keys(SERVICE_REGISTRY)];
 /* Individual (UAE PASS basic account) only gets the free Gate Pass service */
-const liveServices = () => new Set(getPersona() === 'individual' ? ['Tasreeh - Gate Passes'] : ALL_LIVE);
+export const liveServices = () => new Set(getPersona() === 'individual' ? ['Tasreeh - Gate Passes'] : ALL_LIVE);
 const TASREEH = new Set(TASREEH_SERVICES);
 
-export default function SupplierDetailModal({ onClose }: Props) {
+export default function SupplierDetailModal({ onClose, initialItem }: Props) {
   const [LIVE] = useState(liveServices);
   const [individual] = useState(() => getPersona() === 'individual');
   /* Company users (Visitor / Host Company) choose Individual or Company before Gate Passes */
   const [persona] = useState<Persona>(getPersona);
   const isCompany = persona === 'visitor-company' || persona === 'host-company';
-  const [chooseProfile, setChooseProfile] = useState(false);
+  const opensChooser = (item?: string) => item === 'Tasreeh - Gate Passes' && isCompany;
+  const [chooseProfile, setChooseProfile] = useState(() => opensChooser(initialItem));
   const [gpProfile, setGpProfile] = useState<GatePassProfile | null>(null);
   const openService = (item: string) => {
     if (item === 'Tasreeh - Gate Passes' && isCompany) setChooseProfile(true);
     else setService(item);
   };
   const [search, setSearch] = useState('');
-  const [service, setService] = useState<string | null>(null);
+  const [service, setService] = useState<string | null>(() => (initialItem && !opensChooser(initialItem) && LIVE.has(initialItem) ? initialItem : null));
 
   if (service === 'Tasreeh - Gate Passes') {
     return (

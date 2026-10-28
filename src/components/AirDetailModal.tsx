@@ -7,9 +7,9 @@ import CargoInformationPage from './CargoInformationPage';
 import DiscrepancyFeedbackListingPage from './discrepancy/DiscrepancyFeedbackListingPage';
 import CargoTrackingContainer from './cargotracking/CargoTrackingContainer';
 
-type Props = { onClose: () => void; onHome?: () => void };
+type Props = { onClose: () => void; onHome?: () => void; /** Open straight on a service (header search). */ initialItem?: string };
 
-const AIR_COLUMNS: { title: string; items: string[] }[] = [
+export const AIR_COLUMNS: { title: string; items: string[] }[] = [
   {
     title: 'Registration',
     items: ['Bonded Warehouse', 'DC - Manage Services'],
@@ -58,16 +58,16 @@ function Star({ filled }: { filled: boolean }) {
 }
 
 type PageKey = 'cgi' | 'discrepancy' | 'tracking';
-const ITEM_PAGE_MAP: Record<string, PageKey> = {
+export const AIR_ITEM_PAGE_MAP: Record<string, PageKey> = {
   'Submit Cargo Information': 'cgi',
   'Provide Discrepancy Feedback': 'discrepancy',
   'Cargo Tracking': 'tracking',
 };
 const HIGHLIGHTED = new Set(['Submit Cargo Information', 'Provide Discrepancy Feedback', 'Cargo Tracking']);
 
-export default function AirDetailModal({ onClose, onHome }: Props) {
+export default function AirDetailModal({ onClose, onHome, initialItem }: Props) {
   const [search, setSearch] = useState('');
-  const [activePage, setActivePage] = useState<PageKey | null>(null);
+  const [activePage, setActivePage] = useState<PageKey | null>(initialItem ? AIR_ITEM_PAGE_MAP[initialItem] ?? null : null);
 
   const filtered = AIR_COLUMNS.map(col => ({
     ...col,
@@ -233,7 +233,7 @@ export default function AirDetailModal({ onClose, onHome }: Props) {
                   {/* Items */}
                   <div className="flex flex-col gap-[8px]">
                     {col.items.map(item => {
-                      const pageKey = ITEM_PAGE_MAP[item];
+                      const pageKey = AIR_ITEM_PAGE_MAP[item];
                       const isHighlighted = HIGHLIGHTED.has(item);
                       const showStar = STARRED.has(item) || UNSTARRED.has(item);
                       return (
