@@ -6,7 +6,7 @@ import { setAuthenticated } from '../auth';
 /* ──────────────────────────────────────────────────────────────
    After-login "Select Agent Profile" popup. Each agent profile
    keeps its Tasreeh persona flow:
-   1298 Tasreeh → Visitor · Air Clearing Agent → Visitor Company ·
+   1298 Tasreeh → Visitor Company · Air Clearing Agent → Visitor Company ·
    DCAA Member → Host Company · Other Agent Type → Other
    ────────────────────────────────────────────────────────────── */
 
@@ -51,10 +51,10 @@ function AgentCard({ label, selected, onClick }: CardProps) {
   );
 }
 
-const PERSONA_BY_ID: Record<string, Persona> = { trader: 'visitor', shipping: 'visitor-company', airline: 'host-company', other: 'other' };
+const PERSONA_BY_ID: Record<string, Persona> = { trader: 'visitor-company', shipping: 'visitor-company', airline: 'host-company', other: 'other' };
 
 const PROFILES = [
-  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                       target: '/landing/trader' },
+  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                       target: '/landing/shipping-agent' },
   { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C',    target: '/landing/shipping-agent' },
   { id: 'airline',  label: '32704 - DCAA Member - Sandbox Company no 1',                         target: '/landing/airline-agent' },
   { id: 'other',    label: 'Select Other Agent Type',                                            target: '/other-agent-type' },
