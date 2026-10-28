@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Header from './Header';
 import SeaDetailModal, { SEA_COLUMNS, ITEM_PAGE_MAP as SEA_PAGES } from './SeaDetailModal';
 import AirDetailModal, { AIR_COLUMNS, AIR_ITEM_PAGE_MAP } from './AirDetailModal';
-import SupplierDetailModal, { SUPPLIER_COLUMNS, liveServices } from './SupplierDetailModal';
+import SupplierDetailModal, { SUPPLIER_COLUMNS, liveServices, hiddenForPersona } from './SupplierDetailModal';
 
 /* ──────────────────────────────────────────────────────────────
    Header search — "Search by Service Name". Searches every
@@ -20,7 +20,7 @@ function buildIndex(): Entry[] {
   const from = (mode: Mode, cols: { title: string; items: string[] }[], isLive: (i: string) => boolean) =>
     cols.flatMap(c => c.items.map(name => ({ name, mode, group: c.title, live: isLive(name) })));
   return [
-    ...from('Supplier', SUPPLIER_COLUMNS, i => supplierLive.has(i)),
+    ...from('Supplier', SUPPLIER_COLUMNS, i => supplierLive.has(i)).filter(e => !hiddenForPersona(e.name)),
     ...from('Sea', SEA_COLUMNS, i => i in SEA_PAGES),
     ...from('Air', AIR_COLUMNS, i => i in AIR_ITEM_PAGE_MAP),
   ];

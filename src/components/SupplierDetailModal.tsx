@@ -75,6 +75,10 @@ export const SUPPLIER_COLUMNS: { title: string; items: string[] }[] = [
 /* Services that open a working flow */
 const ALL_LIVE = ['Tasreeh - Gate Passes', 'Tasreeh - Delegation Visits', ...Object.keys(SERVICE_REGISTRY)];
 /* Individual (UAE PASS basic account) only gets the free Gate Pass service */
+/* Individual (UAE PASS basic account) doesn't see the other Tasreeh services at all */
+export const hiddenForPersona = (item: string) =>
+  getPersona() === 'individual' && TASREEH_SERVICES.includes(item) && item !== 'Tasreeh - Gate Passes';
+
 export const liveServices = () => new Set(getPersona() === 'individual' ? ['Tasreeh - Gate Passes'] : ALL_LIVE);
 const TASREEH = new Set(TASREEH_SERVICES);
 
@@ -113,7 +117,9 @@ export default function SupplierDetailModal({ onClose, initialItem }: Props) {
 
   const filtered = SUPPLIER_COLUMNS.map(col => ({
     ...col,
-    items: search ? col.items.filter(i => i.toLowerCase().includes(search.toLowerCase())) : col.items,
+    items: col.items
+      .filter(i => !hiddenForPersona(i))
+      .filter(i => !search || i.toLowerCase().includes(search.toLowerCase())),
   })).filter(col => !search || col.items.length > 0);
 
   const NavArrow = ({ dir }: { dir: 'left' | 'right' }) => (
