@@ -236,6 +236,7 @@ export default function SupplierDetailModal({ onClose }: Props) {
       {chooseProfile && (
         <GatePassProfileModal
           onClose={() => setChooseProfile(false)}
+          onHome={onClose}
           onPick={p => { setChooseProfile(false); setGpProfile(p); setService('Tasreeh - Gate Passes'); }}
         />
       )}

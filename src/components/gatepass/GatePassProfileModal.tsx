@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { font } from './GateFields';
-import { Dialog } from './GatePassModals';
+import Header from '../Header';
 
 /* ──────────────────────────────────────────────────────────────
    Company users opening Tasreeh - Gate Passes choose who the
@@ -28,15 +28,29 @@ const OPTIONS: { id: GatePassProfile; label: string; sub: string; icon: JSX.Elem
   },
 ];
 
-export default function GatePassProfileModal({ onClose, onPick }: { onClose: () => void; onPick: (p: GatePassProfile) => void }) {
+/* Shown on its own page: website header over a plain white background, the popup centred on it */
+export default function GatePassProfileModal({ onClose, onHome, onPick }: {
+  onClose: () => void; onHome: () => void; onPick: (p: GatePassProfile) => void;
+}) {
   const [picked, setPicked] = useState<GatePassProfile | null>(null);
   const choose = (p: GatePassProfile) => {
     setPicked(p);
     setTimeout(() => onPick(p), 150);
   };
 
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
   return (
-    <Dialog onClose={onClose} width={720}>
+    <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden">
+      <div className="flex-shrink-0"><Header onHome={onHome} /></div>
+      <div className="flex-1 overflow-y-auto flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" aria-label="Choose Profile Type"
+      className="bg-white rounded-[10px] w-full max-w-[720px] overflow-hidden"
+      style={{ boxShadow: '0 12px 40px rgba(14,27,61,0.16)', border: '1px solid #e8edf5' }}>
       <div className="flex items-center justify-between px-[24px] py-[16px]" style={{ background: '#0e1b3d' }}>
         <h3 className="text-[18px] text-white font-medium" style={{ fontFamily: font }}>Choose Profile Type</h3>
         <button onClick={onClose} aria-label="Close" className="text-white hover:opacity-70">
@@ -69,6 +83,8 @@ export default function GatePassProfileModal({ onClose, onPick }: { onClose: () 
           })}
         </div>
       </div>
-    </Dialog>
+    </div>
+      </div>
+    </div>
   );
 }
