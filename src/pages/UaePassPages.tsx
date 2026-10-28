@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { font, GSection, Grid4, GInput, GSelect, PrimaryBtn, SecondaryBtn } from '../components/gatepass/GateFields';
-import { Dialog } from '../components/gatepass/GatePassModals';
 import { setAuthenticated } from '../auth';
-import { setPersona, markBuLinked } from '../persona';
+import { setPersona } from '../persona';
 const uaePassLogoSrc = new URL('../assets/uaepass-logo.svg', import.meta.url).href;
 const dtLogoSrc = new URL('../assets/dt-logo-login.svg', import.meta.url).href;
 
@@ -117,10 +116,13 @@ export function UpdateProfilePage() {
         </GSection>
       </main>
 
-      <div className="bg-white flex items-center justify-end gap-[16px] px-4 sm:px-[40px] py-[16px] sticky bottom-0"
+      <div className="bg-white flex items-center justify-between gap-[16px] px-4 sm:px-[40px] py-[16px] sticky bottom-0"
         style={{ boxShadow: '0 -4px 20px rgba(14,27,61,0.08)' }}>
-        <SecondaryBtn onClick={() => setP(PROFILE_DEFAULTS)}>Reset</SecondaryBtn>
-        <PrimaryBtn onClick={() => navigate('/landing/individual', { state: { welcome: true } })}>Submit</PrimaryBtn>
+        <SecondaryBtn onClick={() => navigate('/login')}>Cancel</SecondaryBtn>
+        <div className="flex items-center gap-[16px]">
+          <SecondaryBtn onClick={() => setP(PROFILE_DEFAULTS)}>Reset</SecondaryBtn>
+          <PrimaryBtn onClick={() => navigate('/landing/individual', { state: { welcome: true } })}>Submit</PrimaryBtn>
+        </div>
       </div>
     </div>
   );
@@ -226,14 +228,10 @@ export function UaePassExistingLoginPage() {
   const [pass, setPass] = useState('');
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(false);
-  const [linked, setLinked] = useState(false);
   const ready = user.trim() !== '' && pass !== '';
 
-  const link = () => {
-    /* Existing company account → linked straight away, lands on the company home */
-    markBuLinked();
-    setLinked(true);
-  };
+  /* Existing Dubai Trade account → same as the username/password login: persona popup, then landing */
+  const link = () => navigate('/customer-type');
   const inputCls = 'h-[52px] w-full rounded-[6px] px-[16px] text-[15px] text-[#0e1b3d] placeholder-[#9aa3b8] focus:outline-none focus:border-[#1360d2]';
 
   return (
@@ -279,23 +277,6 @@ export function UaePassExistingLoginPage() {
         </button>
       </div>
 
-      {linked && (
-        <Dialog onClose={() => navigate('/landing/shipping-agent')} width={500}>
-          <div className="px-[32px] pt-[44px] pb-[36px] flex flex-col items-center text-center" style={{ fontFamily: font }}>
-            <span className="size-[52px] rounded-full flex items-center justify-center mb-[22px]" style={{ background: '#22b26f', boxShadow: '0 0 0 5px #d7f2e4' }}>
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" strokeWidth="2.6"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </span>
-            <h2 className="text-[20px] font-bold text-[#0e1b3d]">UAE PASS Linked Successfully</h2>
-            <p className="text-[14px] text-[#3f4d66] mt-[12px] leading-[22px]">
-              Your UAE PASS is now linked to your Dubai Trade account <b>{user.trim()}</b>.
-              Future logins through UAE PASS will take you straight to your company services.
-            </p>
-            <div className="mt-[26px]">
-              <PrimaryBtn onClick={() => navigate('/landing/shipping-agent')}>Continue to Dubai Trade</PrimaryBtn>
-            </div>
-          </div>
-        </Dialog>
-      )}
     </LinkShell>
   );
 }
