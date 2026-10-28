@@ -8,12 +8,10 @@ import type { Persona } from '../persona';
    ────────────────────────────────────────────────────────────── */
 export type AgentProfile = {
   id: string; label: string; company: string; persona: Persona; route: string;
-  /** Ask which Tasreeh flow to simulate before landing (Visitor Company / Host Company) */
-  simulate?: boolean;
 };
 
 export const AGENT_PROFILES: AgentProfile[] = [
-  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  company: 'Company Name',              persona: 'visitor-company', route: '/landing/shipping-agent', simulate: true },
+  { id: 'trader',   label: '1298 - Tasreeh - Company Name',                                  company: 'Company Name',              persona: 'visitor-company', route: '/landing/shipping-agent' },
   { id: 'shipping', label: '16545641654 - Air - Clearing Agent - SWBRO01 M&M Private L.L.C', company: 'SWBRO01 M&M Private L.L.C', persona: 'visitor-company', route: '/landing/shipping-agent' },
   { id: 'airline',  label: '32704 - DCAA Member - Sandbox Company no 1',                      company: 'Sandbox Company no 1',      persona: 'host-company',    route: '/landing/airline-agent' },
   { id: 'other',    label: 'Select Other Agent Type',                                         company: 'Company Name',              persona: 'other',           route: '/other-agent-type' },
@@ -96,7 +94,7 @@ export function AgentProfilePanel({ selected, onPick, onClose, hoverClass }: {
   );
 }
 
-/* 1298 - Tasreeh: choose which Tasreeh flow to simulate (design walkthrough only) */
+/* Gate Pass → Company: choose which Tasreeh flow to simulate (design walkthrough only) */
 export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; route: string }[] = [
   { id: 'sim-visitor', label: 'Simulate the Visitor Company Flow', persona: 'visitor-company', route: '/landing/shipping-agent' },
   { id: 'sim-host',    label: 'Simulate Host Company Flow',        persona: 'host-company',    route: '/landing/airline-agent' },
@@ -104,7 +102,7 @@ export const SIMULATE_FLOWS: { id: string; label: string; persona: Persona; rout
 
 /* Kept deliberately plain — a prototype switch, not part of the product design */
 export function SimulateFlowPanel({ onPick, onClose }: {
-  profile: AgentProfile; selected?: string; onPick: (f: typeof SIMULATE_FLOWS[number]) => void; onClose: () => void; hoverClass?: string;
+  onPick: (f: typeof SIMULATE_FLOWS[number]) => void; onClose: () => void;
 }) {
   return (
     <div className="bg-white w-full max-w-[480px] mx-auto rounded-[8px] p-[28px] relative shadow-2xl" role="dialog" aria-label="Simulate flow">

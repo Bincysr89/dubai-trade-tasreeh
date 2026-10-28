@@ -1,5 +1,5 @@
 import { setPersona, isBuLinked, type Persona } from '../persona';
-import { AgentProfilePanel, SimulateFlowPanel, AGENT_PROFILES, rememberAgentProfile, rememberedAgentProfile, type AgentProfile } from '../components/AgentProfilePicker';
+import { AgentProfilePanel, AGENT_PROFILES, rememberAgentProfile, rememberedAgentProfile } from '../components/AgentProfilePicker';
 import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import Header from '../components/Header';
@@ -218,7 +218,6 @@ export default function LandingPage() {
     : 'freight-forwarder';
   const airPersona: AirPersona = agent === 'trader' ? 'bco' : 'freight-forwarder';
   const [showAgentModal, setShowAgentModal] = useState(false);
-  const [simulating, setSimulating] = useState<AgentProfile | null>(null);
   /* Highlight the agent profile in use (picked card, else the one whose flow this landing belongs to) */
   const currentProfile = rememberedAgentProfile()
     ?? AGENT_PROFILES.find(p => p.route === `/landing/${agent}`)?.id ?? '';
@@ -524,34 +523,19 @@ export default function LandingPage() {
 
       {/* Agent type selection modal */}
       {showAgentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => { setShowAgentModal(false); setSimulating(null); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setShowAgentModal(false)}>
           <div className="w-full max-w-[1260px]" onClick={e => e.stopPropagation()}>
-            {simulating ? (
-              <SimulateFlowPanel
-                profile={simulating}
-                hoverClass="hover:border-[#1360d2] hover:shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]"
-                onClose={() => setSimulating(null)}
-                onPick={f => {
-                  setShowAgentModal(false); setSimulating(null);
-                  setPersona(f.persona);
-                  rememberAgentProfile(simulating.id);
-                  navigate(f.route);
-                }}
-              />
-            ) : (
-              <AgentProfilePanel
-                selected={currentProfile}
-                hoverClass="hover:border-[#1360d2] hover:shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]"
-                onClose={() => setShowAgentModal(false)}
-                onPick={p => {
-                  if (p.simulate) { setSimulating(p); return; }
-                  setShowAgentModal(false);
-                  setPersona(p.persona);
-                  rememberAgentProfile(p.id);
-                  navigate(p.route);
-                }}
-              />
-            )}
+            <AgentProfilePanel
+              selected={currentProfile}
+              hoverClass="hover:border-[#1360d2] hover:shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]"
+              onClose={() => setShowAgentModal(false)}
+              onPick={p => {
+                setShowAgentModal(false);
+                setPersona(p.persona);
+                rememberAgentProfile(p.id);
+                navigate(p.route);
+              }}
+            />
           </div>
         </div>
       )}

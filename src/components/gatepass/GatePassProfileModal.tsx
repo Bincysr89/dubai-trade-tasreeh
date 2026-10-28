@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { font } from './GateFields';
 import Header from '../Header';
+import { SimulateFlowPanel } from '../AgentProfilePicker';
+import type { Persona } from '../../persona';
 
 /* ──────────────────────────────────────────────────────────────
    Company users opening Tasreeh - Gate Passes choose who the
@@ -30,24 +32,32 @@ const OPTIONS: { id: GatePassProfile; label: string; sub: string; icon: JSX.Elem
 
 /* Shown on its own page: website header over a plain white background, the popup centred on it */
 export default function GatePassProfileModal({ onClose, onHome, onPick }: {
-  onClose: () => void; onHome: () => void; onPick: (p: GatePassProfile) => void;
+  onClose: () => void; onHome: () => void;
+  /** individual, or the company flow chosen in the simulate popup */
+  onPick: (p: Extract<Persona, 'individual' | 'visitor-company' | 'host-company'>) => void;
 }) {
   const [picked, setPicked] = useState<GatePassProfile | null>(null);
+  /* Company → simulate the Visitor Company or Host Company flow (design walkthrough only) */
+  const [simulate, setSimulate] = useState(false);
   const choose = (p: GatePassProfile) => {
     setPicked(p);
-    setTimeout(() => onPick(p), 150);
+    setTimeout(() => (p === 'company' ? setSimulate(true) : onPick('individual')), 150);
   };
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const h = (e: KeyboardEvent) => { if (e.key !== 'Escape') return; if (simulate) { setSimulate(false); setPicked(null); } else onClose(); };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [onClose]);
+  }, [onClose, simulate]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-white flex flex-col overflow-hidden">
       <div className="flex-shrink-0"><Header onHome={onHome} /></div>
       <div className="flex-1 overflow-y-auto flex items-center justify-center p-4">
+    {simulate ? (
+      <SimulateFlowPanel onClose={() => { setSimulate(false); setPicked(null); }}
+        onPick={f => onPick(f.persona as 'visitor-company' | 'host-company')} />
+    ) : (
     <div role="dialog" aria-modal="true" aria-label="Choose Profile Type"
       className="bg-white rounded-[10px] w-full max-w-[720px] overflow-hidden"
       style={{ boxShadow: '0 12px 40px rgba(14,27,61,0.16)', border: '1px solid #e8edf5' }}>
@@ -84,6 +94,7 @@ export default function GatePassProfileModal({ onClose, onHome, onPick }: {
         </div>
       </div>
     </div>
+    )}
       </div>
     </div>
   );

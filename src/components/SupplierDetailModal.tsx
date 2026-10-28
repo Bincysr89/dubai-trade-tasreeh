@@ -4,7 +4,7 @@ import Header from './Header';
 import supplierIconSrc from '../assets/icon-supplier.svg';
 import catalogueBg from '../assets/catalogue background.jpg';
 import GatePassFlow from './gatepass/GatePassFlow';
-import GatePassProfileModal, { type GatePassProfile } from './gatepass/GatePassProfileModal';
+import GatePassProfileModal from './gatepass/GatePassProfileModal';
 import DelegationFlow from './delegation/DelegationFlow';
 import ServiceFlow from './tasreeh/ServiceFlow';
 import { SERVICE_REGISTRY } from './tasreeh/serviceConfigs';
@@ -86,7 +86,7 @@ export default function SupplierDetailModal({ onClose, initialItem }: Props) {
   const isCompany = persona === 'visitor-company' || persona === 'host-company';
   const opensChooser = (item?: string) => item === 'Tasreeh - Gate Passes' && isCompany;
   const [chooseProfile, setChooseProfile] = useState(() => opensChooser(initialItem));
-  const [gpProfile, setGpProfile] = useState<GatePassProfile | null>(null);
+  const [gpProfile, setGpProfile] = useState<Persona | null>(null);
   const openService = (item: string) => {
     if (item === 'Tasreeh - Gate Passes' && isCompany) setChooseProfile(true);
     else setService(item);
@@ -98,7 +98,7 @@ export default function SupplierDetailModal({ onClose, initialItem }: Props) {
     return (
       <GatePassFlow
         key={gpProfile ?? 'default'}
-        profile={gpProfile === 'individual' ? 'individual' : undefined}
+        profile={gpProfile ?? undefined}
         onClose={() => { setService(null); setGpProfile(null); }}
       />
     );
