@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import ServiceCatalogueModal from '../components/ServiceCatalogueModal';
 import { font, GSection, GInput, GSelect, GTag, PrimaryBtn, SecondaryBtn } from '../components/gatepass/GateFields';
 import { Dialog } from '../components/gatepass/GatePassModals';
+import { TASREEH_SERVICES } from '../components/gatepass/gatePassData';
 import { homeRoute, markBuLinked } from '../persona';
 
 /* ──────────────────────────────────────────────────────────────
@@ -297,12 +298,13 @@ export function BuAssociationPage() {
 }
 
 /* ── Create User (Figma 16134:51117 agent codes → 16134:50614 services & privileges) ── */
-const UNITS = ['Dubai Trade', 'DP World', 'JAFZA'];
-const AGENT_CODES = Array.from({ length: 20 }, (_, i) => (i === 0 ? '08938 - Offshore Agent' : String(8938 + i).padStart(5, '0')));
-const SERVICES = [
-  { name: 'Business Association', code: '08938', bu: 'Dubai Trade', type: 'Company Code', role: 'Role' },
-  { name: 'Tasreeh - Gate Passes', code: '08938', bu: 'PCFC - Tasreeh', type: 'Company Code', role: 'Role' },
-  { name: 'Tasreeh - Delegation Visits', code: '08938', bu: 'PCFC - Tasreeh', type: 'Company Code', role: 'Role' },
+const PCFC = 'PCFC - Tasreeh';
+const PCFC_CODE = '12324 - Tasreeh';
+const UNITS = ['Dubai Trade', 'DP World', PCFC];
+/* PCFC - Tasreeh services carry the Service Catalogue names and no privilege checkboxes */
+const SERVICES: { name: string; code: string; bu: string; type: string; role: string; privileges: boolean }[] = [
+  { name: 'Business Association', code: '08938', bu: 'Dubai Trade', type: 'Company Code', role: 'Role', privileges: true },
+  ...TASREEH_SERVICES.map(name => ({ name, code: '12324', bu: PCFC, type: 'Tasreeh', role: 'Role', privileges: false })),
 ];
 const PRIVILEGES = ['View', 'Amend', 'Cancel', 'Request'];
 
@@ -349,7 +351,8 @@ export function CreateUserPage() {
 
   const toggle = (set: Set<string>, key: string, on: boolean) => { const n = new Set(set); if (on) n.add(key); else n.delete(key); return n; };
   const togglePriv = (row: string, p: string, on: boolean) => setPriv(prev => ({ ...prev, [row]: toggle(prev[row] ?? new Set(), p, on) }));
-  const allPriv = (p: string) => SERVICES.every(s => priv[s.name]?.has(p));
+  const withPriv = SERVICES.filter(s => s.privileges);
+  const allPriv = (p: string) => withPriv.every(s => priv[s.name]?.has(p));
 
   if (step === 1) {
     return (
@@ -362,7 +365,7 @@ export function CreateUserPage() {
         <div className="flex flex-wrap items-center gap-[20px] mb-[36px]">
           <SearchBox placeholder="Search Agent Codes" />
           <Filter label="Business Units" options={UNITS} value={buFilter} onChange={setBuFilter} />
-          <Filter label="Agent Type" options={['Offshore Agent', 'Shipping Agent', 'Clearing Agent']} value={typeFilter} onChange={setTypeFilter} />
+          <Filter label="Agent Type" options={['Tasreeh', 'Shipping Agent', 'Clearing Agent']} value={typeFilter} onChange={setTypeFilter} />
         </div>
         <p className="text-[18px] font-medium text-[#0e1b3d] mb-[20px]">Select the agent codes and assign the services</p>
         <div className="bg-white rounded-[8px] p-[16px] overflow-x-auto" style={{ boxShadow: '0px 5px 32px rgba(143,155,186,0.10)' }}>
@@ -392,10 +395,10 @@ export function CreateUserPage() {
               </div>
 
               <div className="py-[22px] px-[22px] border-b border-[#e2e8f5]">
-                <Check checked={units.has('JAFZA')} onChange={on => setUnits(s => toggle(s, 'JAFZA', on))} label="JAFZA" />
+                <Check checked={units.has(PCFC)} onChange={on => setUnits(s => toggle(s, PCFC, on))} label={PCFC} />
               </div>
-              <div className="py-[18px] px-[12px] border-b border-[#e2e8f5] grid grid-cols-5 gap-y-[22px] gap-x-[16px] max-h-[240px] overflow-y-auto">
-                {AGENT_CODES.map(c => <Check key={c} checked={codes.has(c)} onChange={on => setCodes(s => toggle(s, c, on))} label={c} />)}
+              <div className="py-[22px] px-[12px] border-b border-[#e2e8f5]">
+                <Check checked={codes.has(PCFC_CODE)} onChange={on => setCodes(s => toggle(s, PCFC_CODE, on))} label={PCFC_CODE} />
               </div>
             </div>
           </div>
@@ -433,8 +436,8 @@ export function CreateUserPage() {
       <div className="flex flex-wrap items-center gap-[16px] mb-[20px]">
         <SearchBox placeholder="Search Services" />
         <Filter label="Filter by BU" options={['Dubai Trade', 'PCFC - Tasreeh']} value={f2.bu} onChange={v => setF2(p => ({ ...p, bu: v }))} w={182} />
-        <Filter label="Agent Code" options={['ALL', '08938']} value={f2.code} onChange={v => setF2(p => ({ ...p, code: v }))} w={208} />
-        <Filter label="Filter by Agent Type" options={['Company Code', 'Offshore Agent']} value={f2.type} onChange={v => setF2(p => ({ ...p, type: v }))} w={196} />
+        <Filter label="Agent Code" options={['ALL', '08938', '12324']} value={f2.code} onChange={v => setF2(p => ({ ...p, code: v }))} w={208} />
+        <Filter label="Filter by Agent Type" options={['Company Code', 'Tasreeh']} value={f2.type} onChange={v => setF2(p => ({ ...p, type: v }))} w={196} />
         <Filter label="Filter by Role" options={['Role']} value={f2.role} onChange={v => setF2(p => ({ ...p, role: v }))} w={200} />
       </div>
 
@@ -461,7 +464,7 @@ export function CreateUserPage() {
               <td colSpan={4} className="border-b border-[#e2e8f5]" />
               {PRIVILEGES.map(p => (
                 <td key={p} className="px-[30px] border-b border-[#e2e8f5]">
-                  <Check checked={allPriv(p)} onChange={on => SERVICES.forEach(s => togglePriv(s.name, p, on))} label={p} />
+                  <Check checked={allPriv(p)} onChange={on => withPriv.forEach(s => togglePriv(s.name, p, on))} label={p} />
                 </td>
               ))}
             </tr>
@@ -476,7 +479,7 @@ export function CreateUserPage() {
                 <td className="px-[12px] border-b border-[#e2e8f5]">{s.role}</td>
                 {PRIVILEGES.map(p => (
                   <td key={p} className="px-[30px] border-b border-[#e2e8f5]">
-                    <Check checked={!!priv[s.name]?.has(p)} onChange={on => togglePriv(s.name, p, on)} />
+                    {s.privileges && <Check checked={!!priv[s.name]?.has(p)} onChange={on => togglePriv(s.name, p, on)} />}
                   </td>
                 ))}
               </tr>
