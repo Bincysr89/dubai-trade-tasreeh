@@ -106,19 +106,20 @@ export default function Header({ onServiceCatalogue, onHome, catalogueClosesOnCl
               <svg viewBox="0 0 16 16" className={`size-[14px] text-white transition-transform ${profileOpen ? 'rotate-180' : ''}`} fill="currentColor"><path d="M4 6l4 4 4-4z" /></svg>
             </button>
             {profileOpen && (
-              <div className="absolute right-0 top-[52px] bg-white rounded-[8px] py-[4px] overflow-hidden z-[80]" style={{ minWidth: 180, boxShadow: '0px 2px 16px 0px rgba(0,0,0,0.18)', border: '1px solid #f0f0f5' }}>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-[10px] w-full px-[14px] py-[10px] text-left hover:bg-[#1360d2] group transition-colors"
-                  style={{ fontFamily: "'Dubai', sans-serif" }}
-                >
-                  <svg viewBox="0 0 24 24" className="size-[18px] text-[#1360d2] group-hover:text-white" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 4H5a2 2 0 00-2 2v12a2 2 0 002 2h4" />
-                    <path d="M16 17l5-5-5-5" />
-                    <path d="M21 12H9" />
-                  </svg>
-                  <span className="text-[16px] text-[#111838] group-hover:text-white leading-[20px]">Logout</span>
-                </button>
+              /* Profile flyout (User Management Figma 16260:19171) */
+              <div role="menu" className="absolute right-0 top-[62px] bg-white py-[18px] z-[80]"
+                style={{ width: 236, boxShadow: '0px 4px 20px rgba(0,0,0,0.16)', border: '1px solid #eef0f5', fontFamily: "'Dubai', sans-serif" }}>
+                {[
+                  { label: 'My Profile', onClick: () => setProfileOpen(false) },
+                  { label: 'Company Management', onClick: () => { setProfileOpen(false); navigate('/company/bu-association'); } },
+                  { label: 'Reports', onClick: () => setProfileOpen(false) },
+                  { label: 'Logout', onClick: handleLogout },
+                ].map(item => (
+                  <button key={item.label} role="menuitem" onClick={item.onClick}
+                    className="block w-full px-[24px] py-[6px] text-left text-[14px] font-medium text-[#0e1b3d] hover:bg-[#e2ebf9] hover:text-[#1360d2] transition-colors">
+                    {item.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
