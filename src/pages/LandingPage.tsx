@@ -1,4 +1,5 @@
 import { setPersona, isBuLinked, type Persona } from '../persona';
+import { AgentProfilePanel, AGENT_PROFILES, rememberAgentProfile, rememberedAgentProfile } from '../components/AgentProfilePicker';
 import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import Header from '../components/Header';
@@ -204,15 +205,6 @@ const LABELS: Record<Agent, string> = {
   individual: 'Individual',
 };
 
-/* Tasreeh personas: Visitor / Visitor Company / Host Company ride on the existing agent routes */
-const PERSONA_BY_AGENT: Record<Agent, Persona> = { trader: 'visitor', 'shipping-agent': 'visitor-company', 'airline-agent': 'host-company', 'other-agent': 'other', individual: 'individual' };
-
-const AGENT_TYPE_OPTIONS: { id: Agent; label: string; icon: React.ReactNode; route: string }[] = [
-  { id: 'trader', label: 'Visitor', icon: <TraderIcon size={72} />, route: '/landing/trader' },
-  { id: 'shipping-agent', label: 'Visitor Company', icon: <ShippingAgentIcon size={72} />, route: '/landing/shipping-agent' },
-  { id: 'airline-agent', label: 'Host Company', icon: <AirlineAgentIcon size={72} />, route: '/landing/airline-agent' },
-  { id: 'other-agent', label: 'Other Agent Type', icon: <OtherAgentIcon size={72} />, route: '/other-agent-type' },
-];
 
 export default function LandingPage() {
   const params = useParams<{ agent: Agent }>();
@@ -226,6 +218,9 @@ export default function LandingPage() {
     : 'freight-forwarder';
   const airPersona: AirPersona = agent === 'trader' ? 'bco' : 'freight-forwarder';
   const [showAgentModal, setShowAgentModal] = useState(false);
+  /* Highlight the agent profile in use (picked card, else the one whose flow this landing belongs to) */
+  const currentProfile = rememberedAgentProfile()
+    ?? AGENT_PROFILES.find(p => p.route === `/landing/${agent}`)?.id ?? '';
   /* Individual = UAE PASS basic account (User Management Figma 16178:16203) */
   const location = useLocation();
   const isIndividual = agent === 'individual';
@@ -526,37 +521,19 @@ export default function LandingPage() {
 
       {/* Agent type selection modal */}
       {showAgentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAgentModal(false)}>
-          <div className="bg-white w-full max-w-[1100px] rounded-lg overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-[#0e1b3d] px-6 py-5 flex items-center justify-between">
-              <h2 className="text-[#f8fafd] font-medium text-[20px]">Customer Type</h2>
-              <button onClick={() => setShowAgentModal(false)} className="text-white text-[24px] hover:opacity-80">✕</button>
-            </div>
-            <div className="px-20 pt-12 pb-[150px]">
-              <h3 className="text-[#0e1b3d] text-[24px] font-normal text-center mb-12">
-                Hi User, Select Your Customer Type to Access the Services
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 place-items-center">
-                {AGENT_TYPE_OPTIONS.map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => { setShowAgentModal(false); setPersona(PERSONA_BY_AGENT[opt.id]); navigate(opt.route); }}
-                    className={`relative bg-white rounded-[12px] w-full max-w-[230px] h-[220px] flex flex-col items-start justify-between overflow-hidden transition-all
-                      ${agent === opt.id
-                        ? 'border-2 border-[#1360d2] shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]'
-                        : 'border-2 border-[#ddd] hover:border-[#1360d2] hover:shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]'}`}
-                  >
-                    <div className="absolute top-0 right-0 w-[90px] h-[90px] overflow-hidden pointer-events-none">
-                      <div className="absolute -top-[45px] -right-[45px] w-[90px] h-[90px] rounded-full border-2 border-[#ea2428]" />
-                    </div>
-                    <div className="flex-1 flex items-center justify-center w-full pt-[20px]">{opt.icon}</div>
-                    <div className="w-full bg-[#f9f9f9] flex items-center justify-center p-[10px] text-[#0e1b3d] font-medium text-[18px] leading-[20px] text-center capitalize">
-                      {opt.label}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setShowAgentModal(false)}>
+          <div className="w-full max-w-[1260px]" onClick={e => e.stopPropagation()}>
+            <AgentProfilePanel
+              selected={currentProfile}
+              hoverClass="hover:border-[#1360d2] hover:shadow-[0_8px_24px_-4px_rgba(19,96,210,0.25)]"
+              onClose={() => setShowAgentModal(false)}
+              onPick={p => {
+                setShowAgentModal(false);
+                setPersona(p.persona);
+                rememberAgentProfile(p.id);
+                navigate(p.route);
+              }}
+            />
           </div>
         </div>
       )}
