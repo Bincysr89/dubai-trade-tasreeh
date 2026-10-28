@@ -10,7 +10,7 @@ import { font, GSelect, GDate, GInput, NeedHelp, ResetBtn, IconBtn } from './Gat
 import {
   GATE_ROWS, DRAFT_ROWS, GATE_STATUSES, STATUS_STYLE, STATUS_COLORS, SEARCH_FIELDS, ROW_ACTIONS,
   DOWNLOAD_OPTIONS, PORTS, PASS_TYPES, PASS_DURATIONS, NATIONALITIES, GENERATED_BY, HOST_SUBUSERS,
-  GATE_PASS_TITLE, agentBanner,
+  GATE_PASS_TITLE, agentBanner, serviceTitle,
   type GateRow, type GateStatus, type RowAction,
 } from './gatePassData';
 
@@ -285,7 +285,7 @@ function PassCard({ row, draft, selected, onToggle, onAction, onOpenDraft, actio
 export default function GatePassListingPage({ variant, tabs, activeTab, onTabChange, rows = GATE_ROWS, drafts = DRAFT_ROWS, initialShowDrafts = false, onClose, onCreate, onAction, onOpenDraft }: Props) {
   /* Content comes from the variant when another persona reuses the template */
   const v = {
-    title: variant?.title ?? GATE_PASS_TITLE,
+    title: serviceTitle(variant?.title ?? GATE_PASS_TITLE),
     columns: variant?.columns ?? COL_DEFS,
     defaultVisible: variant?.defaultVisible ?? DEFAULT_VISIBLE,
     actions: variant?.actions ?? (ROW_ACTIONS as readonly string[]),

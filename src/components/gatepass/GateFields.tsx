@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Header from '../Header';
 import { DateInput } from '../DatePicker';
 import { DhAmount } from '../Dh';
-import { agentBanner } from './gatePassData';
+import { agentBanner, serviceTitle, GATE_PASS_TITLE } from './gatePassData';
 
 export const font = "'Dubai', sans-serif";
 
@@ -571,7 +571,7 @@ export function NeedHelp() {
    scrolling body and the sticky bottom bar.
    ────────────────────────────────────────────────────────────── */
 export function GatePage({
-  title, titleExtra, actions, onHome, onListing, footerLeft, footerRight, children, crumb = 'Tasreeh - Gate Passes',
+  title, titleExtra, actions, onHome, onListing, footerLeft, footerRight, children, crumb = GATE_PASS_TITLE,
 }: {
   title: string;
   /** Last breadcrumb — the service the page belongs to. */
@@ -595,7 +595,7 @@ export function GatePage({
             <span className="text-[#dc3545] px-[4px]">/</span>
             <span className="text-[#8f94ae] cursor-pointer hover:text-[#1360d2]" onClick={onListing}>Service Catalog</span>
             <span className="text-[#dc3545] px-[4px]">/</span>
-            <span className="text-[#111838] font-medium cursor-pointer" onClick={onListing}>{crumb}</span>
+            <span className="text-[#111838] font-medium cursor-pointer" onClick={onListing}>{serviceTitle(crumb)}</span>
           </div>
           <div className="px-[16px] py-[5px] rounded-[4px] text-[16px] text-[#0e1b3d]" style={{ background: '#e2ebf9', fontFamily: font }}>
             {agentBanner()}

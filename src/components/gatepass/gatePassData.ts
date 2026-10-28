@@ -12,6 +12,12 @@ export const AGENT_BANNER = 'A180-SHIPPING AGENT(A)-MAERSK KAKOO UAE LLC';
 /* A company user who picks "Individual" for gate passes sees the individual banner while in the flow */
 let bannerProfile: string | null = null;
 export const setBannerProfile = (p: string | null) => { bannerProfile = p; };
+/* Inside the service the name carries the flow: "Tasreeh - Gate Passes - Individual" etc. */
+const PROFILE_SUFFIX: Record<string, string> = { individual: 'Individual', 'visitor-company': 'Visitor Company', 'host-company': 'Host Company' };
+export const serviceTitle = (title: string) => {
+  const suffix = title === GATE_PASS_TITLE ? PROFILE_SUFFIX[bannerProfile ?? getPersona()] : undefined;
+  return suffix ? `${title} - ${suffix}` : title;
+};
 export const agentBanner = () => ((bannerProfile ?? getPersona()) === 'individual' ? 'INDIVIDUAL - AHMED AL MARRI' : AGENT_BANNER);
 
 /* Gate Management column of the Supplier catalogue (Figma 1:6268) */
